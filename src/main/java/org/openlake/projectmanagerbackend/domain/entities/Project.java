@@ -1,10 +1,9 @@
-package org.openlake.projectmanagerbackend.domain;
+package org.openlake.projectmanagerbackend.domain.entities;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.hibernate.annotations.UuidGenerator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +22,7 @@ public class Project {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false, unique = true, updatable = false)
     private Long projectId;
-    @NotNull
+    @NotNull(message = "Project name cannot be empty")
     private String projectName;
     @Column(columnDefinition = "TEXT")
     private String projectDescription;

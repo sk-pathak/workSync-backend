@@ -3,9 +3,10 @@ package org.openlake.projectmanagerbackend.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.openlake.projectmanagerbackend.domain.User;
+import org.openlake.projectmanagerbackend.domain.entities.User;
 import org.openlake.projectmanagerbackend.repo.UserRepo;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,11 +16,10 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class UserService {
-    @Autowired
-    private UserRepo userRepo;
+    private final UserRepo userRepo;
 
     public User getUser(String username) {
-        return userRepo.findByUsername(username);
+        return userRepo.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username));
     }
 
     public List<User> getAllUsers() {
@@ -28,10 +28,12 @@ public class UserService {
 
     public User createUser(User user) {
         // EMPTY PROJECTLIST THEN ADD LATER
+//        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+//        user.setPassword(encoder.encode(user.getPassword()));
         return userRepo.save(user);
     }
 
     public void deleteUser(String username) {
-        userRepo.delete(userRepo.findByUsername(username));
+        userRepo.delete(userRepo.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username)));
     }
 }
