@@ -70,8 +70,7 @@ public class UserService{
         try{
             userRepo.delete(userRepo.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username+" not found")));
             response.setStatusCode(200);
-            response.setMessage("Success");
-            response.setMessage("Deleted user "+username);
+            response.setMessage("Success, Deleted user "+username);
         }
         catch (UsernameNotFoundException e){
             response.setStatusCode(404);
@@ -85,7 +84,6 @@ public class UserService{
     }
 
     public Response createUser(UserEntity userEntity) {
-        // EMPTY PROJECT LIST THEN ADD LATER
         Response response = new Response();
         try{
             if(userEntity.getRole() == null || userEntity.getRole().name().isBlank()){
@@ -97,9 +95,21 @@ public class UserService{
             userEntity.setPassword(new BCryptPasswordEncoder().encode(userEntity.getPassword()));
             UserEntity savedUserEntity = userRepo.save(userEntity);
             User savedUser = Utils.mapUserEntitytoUser(savedUserEntity);
-            response.setStatusCode(200);
-            response.setMessage("Success");
-            response.setUser(savedUser);
+
+            Response loginResponse = loginUser(userEntity.getUsername(), savedUser.getPassword());
+            if(loginResponse.getStatusCode() == 200){
+                response.setStatusCode(201);
+                response.setUser(savedUser);
+                response.setToken(loginResponse.getToken());
+                response.setRole(loginResponse.getRole());
+                response.setExpirationTime(loginResponse.getExpirationTime());
+                response.setMessage("Success, saved user and logged in");
+            }
+            else if(loginResponse.getStatusCode() == 500) {
+                response.setStatusCode(201);
+                response.setUser(savedUser);
+                response.setMessage("Success, saved user but failed to login");
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

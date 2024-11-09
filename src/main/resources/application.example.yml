@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: projectManager
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    username: ${username}
+    password: ${password}
+    url: jdbc:postgresql://localhost:5432/${dbname}
+  jpa:
+    generate-ddl: true
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+jwt:
+  secretKey: ${key}

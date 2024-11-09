@@ -1,12 +1,11 @@
 package org.openlake.projectmanagerbackend.resource;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.openlake.projectmanagerbackend.domain.Response;
 import org.openlake.projectmanagerbackend.domain.entity.ProjectEntity;
 import org.openlake.projectmanagerbackend.service.ProjectService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -16,23 +15,26 @@ public class ProjectResource {
     private final ProjectService projectService;
 
     @GetMapping("/all")
-    public List<ProjectEntity> getAllProjects() {
-        return projectService.getAllProjects();
+    public ResponseEntity<Response> getAllProjects() {
+        Response response = projectService.getAllProjects();
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @GetMapping("/all/{id}")
-    public ProjectEntity getProjectById(@PathVariable @Valid Long id) {
-        return projectService.getProjectById(id);
+    public ResponseEntity<Response> getProjectById(@PathVariable Long id) {
+        Response response = projectService.getProjectById(id);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @DeleteMapping("/all/{id}")
-    public void deleteProjectById(@PathVariable @Valid Long id) {
-        projectService.deleteProjectById(id);
+    public ResponseEntity<Response> deleteProjectById(@PathVariable Long id) {
+        Response response = projectService.deleteProjectById(id);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
     @PostMapping("/create")
-    public ProjectEntity createProject(@RequestBody @Valid ProjectEntity projectEntity) {
-        System.out.println("in resource");
-        return projectService.createProject(projectEntity);
+    public ResponseEntity<Response> createProject(@RequestBody ProjectEntity projectEntity) {
+        Response response = projectService.createProject(projectEntity);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 }

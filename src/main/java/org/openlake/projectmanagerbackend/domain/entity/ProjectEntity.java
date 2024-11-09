@@ -31,6 +31,8 @@ public class ProjectEntity {
 
     private String createdBy;
 
+    private String sourceCodeLink;
+
     @ElementCollection(targetClass = String.class)
     @CollectionTable(name = "project_tags", joinColumns = @JoinColumn(name = "project_id"))
     @Column(name = "tags", nullable = false)

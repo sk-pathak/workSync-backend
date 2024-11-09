@@ -2,6 +2,7 @@ package org.openlake.projectmanagerbackend.resource;
 
 import lombok.RequiredArgsConstructor;
 import org.openlake.projectmanagerbackend.domain.Response;
+import org.openlake.projectmanagerbackend.domain.dto.User;
 import org.openlake.projectmanagerbackend.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

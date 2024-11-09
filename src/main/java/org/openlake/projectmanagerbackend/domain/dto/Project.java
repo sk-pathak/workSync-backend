@@ -12,6 +12,7 @@ public class Project {
     private String projectName;
     private String projectDescription;
     private String createdBy;
+    private String sourceCodeLink;
     private List<String> tags;
     private List<User> users;
 }
