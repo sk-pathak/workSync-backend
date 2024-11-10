@@ -1,6 +1,8 @@
 package org.openlake.projectmanagerbackend.domain.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import org.openlake.projectmanagerbackend.domain.enumeration.Role;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,7 +19,9 @@ public class User {
     private String name;
     private String email;
     private String username;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Role role;
     private List<Project> projects;
 }

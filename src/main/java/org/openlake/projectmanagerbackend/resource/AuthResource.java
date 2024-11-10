@@ -1,7 +1,7 @@
 package org.openlake.projectmanagerbackend.resource;
 
 import lombok.RequiredArgsConstructor;
-import org.openlake.projectmanagerbackend.domain.Response;
+import org.openlake.projectmanagerbackend.domain.AuthResponse;
 import org.openlake.projectmanagerbackend.domain.entity.UserEntity;
 import org.openlake.projectmanagerbackend.service.UserService;
 import org.springframework.http.ResponseEntity;
@@ -17,16 +17,16 @@ public class AuthResource {
     private final UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<Response> register(@RequestBody UserEntity userEntity) {
-        Response response = userService.createUser(userEntity);
-        return ResponseEntity.status(response.getStatusCode()).body(response);
+    public ResponseEntity<AuthResponse> register(@RequestBody UserEntity userEntity) {
+        AuthResponse authResponse = userService.createUser(userEntity);
+        return ResponseEntity.status(authResponse.getStatusCode()).body(authResponse);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Response> login(@RequestBody Map<String, String> loginRequest) {
+    public ResponseEntity<AuthResponse> login(@RequestBody Map<String, String> loginRequest) {
         String username = loginRequest.get("username");
         String password = loginRequest.get("password");
-        Response response = userService.loginUser(username, password);
-        return ResponseEntity.status(response.getStatusCode()).body(response);
+        AuthResponse authResponse = userService.loginUser(username, password);
+        return ResponseEntity.status(authResponse.getStatusCode()).body(authResponse);
     }
 }

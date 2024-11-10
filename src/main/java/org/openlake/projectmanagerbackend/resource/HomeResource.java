@@ -1,6 +1,6 @@
 package org.openlake.projectmanagerbackend.resource;
 
-import org.openlake.projectmanagerbackend.domain.Response;
+import org.openlake.projectmanagerbackend.domain.AuthResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -9,10 +9,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class HomeResource {
 
     @GetMapping({"/", "/home"})
-    public ResponseEntity<Response> home() {
-        Response response = new Response();
-        response.setStatusCode(200);
-        response.setMessage("Success");
-        return ResponseEntity.status(response.getStatusCode()).body(response);
+    public ResponseEntity<AuthResponse> home() {
+        AuthResponse authResponse = new AuthResponse();
+        authResponse.setStatusCode(200);
+        authResponse.setMessage("Success");
+        return ResponseEntity.status(authResponse.getStatusCode()).body(authResponse);
     }
 }

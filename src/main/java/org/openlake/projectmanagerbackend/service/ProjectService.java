@@ -3,15 +3,21 @@ package org.openlake.projectmanagerbackend.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.openlake.projectmanagerbackend.domain.Response;
+import org.openlake.projectmanagerbackend.domain.ProjectResponse;
 import org.openlake.projectmanagerbackend.domain.dto.Project;
 import org.openlake.projectmanagerbackend.domain.entity.ProjectEntity;
+import org.openlake.projectmanagerbackend.domain.entity.UserEntity;
 import org.openlake.projectmanagerbackend.repo.ProjectRepo;
+import org.openlake.projectmanagerbackend.repo.UserRepo;
 import org.openlake.projectmanagerbackend.utils.Utils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -21,41 +27,51 @@ import java.util.List;
 public class ProjectService {
 
     private final ProjectRepo projectRepo;
+    private final UserRepo userRepo;
 
-    public Response getAllProjects() {
-        Response response = new Response();
+    public ProjectResponse getAllProjects(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        ProjectResponse projectResponse = new ProjectResponse();
         try{
-            List<ProjectEntity> projectEntities = projectRepo.findAll();
-            List<Project> projects = Utils.mapProjectListEntityToProjectList(projectEntities);
-            response.setStatusCode(200);
-            response.setMessage("Success");
-            response.setProjectList(projects);
+            Page<ProjectEntity> projectEntities = projectRepo.findAll(pageable);
+            List<Project> projects = Utils.mapProjectListEntityToProjectList(projectEntities.getContent());
+
+            long total = projectRepo.count();
+            boolean hasMore = projectEntities.hasNext();
+
+            projectResponse.setStatusCode(200);
+            projectResponse.setMessage("Success");
+            projectResponse.setProjectList(projects);
+            projectResponse.setTotalCount(total);
+            projectResponse.setTotalPages(projectEntities.getTotalPages());
+            projectResponse.setCurrentPage(page);
+            projectResponse.setHasMore(hasMore);
         }
         catch (Exception e){
-            response.setStatusCode(500);
-            response.setMessage("Error getting projects: "+e.getMessage());
+            projectResponse.setStatusCode(500);
+            projectResponse.setMessage("Error getting projects: "+e.getMessage());
         }
-        return response;
+        return projectResponse;
     }
 
-    public Response getProjectById(Long id) {
-        Response response = new Response();
+    public ProjectResponse getProjectById(Long id) {
+        ProjectResponse projectResponse = new ProjectResponse();
         try{
             ProjectEntity projectEntity = projectRepo.findById(id).orElseThrow(()-> new RuntimeException("Project not found"));
             Project project = Utils.mapProjectEntitytoProject(projectEntity);
-            response.setStatusCode(200);
-            response.setMessage("Success");
-            response.setProject(project);
+            projectResponse.setStatusCode(200);
+            projectResponse.setMessage("Success");
+            projectResponse.setProject(project);
         }
         catch (Exception e){
-            response.setStatusCode(500);
-            response.setMessage("Error getting project: "+e.getMessage());
+            projectResponse.setStatusCode(500);
+            projectResponse.setMessage("Error getting project: "+e.getMessage());
         }
-        return response;
+        return projectResponse;
     }
 
-    public Response deleteProjectById(Long id) {
-        Response response = new Response();
+    public ProjectResponse deleteProjectById(Long id) {
+        ProjectResponse projectResponse = new ProjectResponse();
         try{
             ProjectEntity projectEntity = projectRepo.findById(id).orElseThrow(()-> new RuntimeException("Project not found"));
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -67,37 +83,68 @@ public class ProjectService {
             else{
                 throw new RuntimeException("User not logged in");
             }
-            response.setStatusCode(200);
-            response.setMessage("Success, Deleted project "+id);
+            projectResponse.setStatusCode(200);
+            projectResponse.setMessage("Success, Deleted project "+id);
         }
         catch (Exception e){
-            response.setStatusCode(500);
-            response.setMessage("Error deleting project: "+e.getMessage());
+            projectResponse.setStatusCode(500);
+            projectResponse.setMessage("Error deleting project: "+e.getMessage());
         }
-        return response;
+        return projectResponse;
     }
 
-    public Response createProject(ProjectEntity projectEntity) {
-        Response response = new Response();
+    public ProjectResponse createProject(ProjectEntity projectEntity) {
+        ProjectResponse projectResponse = new ProjectResponse();
         try{
             if(projectRepo.existsByProjectName(projectEntity.getProjectName())){
-                response.setStatusCode(400);
-                response.setMessage("Project name already exists");
+                projectResponse.setStatusCode(400);
+                projectResponse.setMessage("Project name already exists");
             }
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             String username = authentication.getName();
             projectEntity.setCreatedBy(username);
 
+            UserEntity userEntity = userRepo.findByUsername(username).orElseThrow(()-> new RuntimeException("User not found"));
+            projectEntity.getUserEntities().add(userEntity);
+
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            Date currentDate = new Date();
+            String formattedDate = sdf.format(currentDate);
+            projectEntity.setDate(formattedDate);
+
             ProjectEntity savedProjectEntity = projectRepo.save(projectEntity);
             Project savedProject = Utils.mapProjectEntitytoProject(savedProjectEntity);
-            response.setStatusCode(201);
-            response.setMessage("Success, created project");
-            response.setProject(savedProject);
+            projectResponse.setStatusCode(201);
+            projectResponse.setMessage("Success, created project");
+            projectResponse.setProject(savedProject);
         }
         catch (Exception e){
-            response.setStatusCode(500);
-            response.setMessage("Error creating project: "+e.getMessage());
+            projectResponse.setStatusCode(500);
+            projectResponse.setMessage("Error creating project: "+e.getMessage());
         }
-        return response;
+        return projectResponse;
+    }
+
+    public ProjectResponse addUserToProject(Long projectId) {
+        ProjectResponse projectResponse = new ProjectResponse();
+        try{
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+            UserEntity userEntity = userRepo.findByUsername(username).orElseThrow(()-> new RuntimeException("User not logged in"));
+
+            ProjectEntity projectEntity = projectRepo.findById(projectId).orElseThrow(()-> new RuntimeException("Project not found"));
+            projectEntity.getUserEntities().add(userEntity);
+
+            ProjectEntity savedProjectEntity = projectRepo.save(projectEntity);
+            Project savedProject = Utils.mapProjectEntitytoProject(savedProjectEntity);
+            projectResponse.setStatusCode(201);
+            projectResponse.setMessage("Success, added user to project");
+            projectResponse.setProject(savedProject);
+        }
+        catch (Exception e){
+            projectResponse.setStatusCode(500);
+            projectResponse.setMessage("Error updating project: "+e.getMessage());
+        }
+        return projectResponse;
     }
 }

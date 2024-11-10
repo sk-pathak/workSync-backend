@@ -13,6 +13,9 @@ public class Project {
     private String projectDescription;
     private String createdBy;
     private String sourceCodeLink;
+    private String projectImageLink;
+    private String date;
+    private int stars;
     private List<String> tags;
     private List<User> users;
 }

@@ -4,7 +4,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.openlake.projectmanagerbackend.domain.Response;
+import org.openlake.projectmanagerbackend.domain.AuthResponse;
 import org.openlake.projectmanagerbackend.domain.dto.User;
 import org.openlake.projectmanagerbackend.domain.entity.UserEntity;
 import org.openlake.projectmanagerbackend.domain.enumeration.Role;
@@ -28,63 +28,63 @@ public class UserService{
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
 
-    public Response getAllUsers() {
-        Response response = new Response();
+    public AuthResponse getAllUsers() {
+        AuthResponse authResponse = new AuthResponse();
         try{
             List<UserEntity> userEntityList = userRepo.findAll();
             List<User> users = Utils.mapUserListEntityToUserList(userEntityList);
-            response.setStatusCode(200);
-            response.setMessage("Success");
-            response.setUserList(users);
+            authResponse.setStatusCode(200);
+            authResponse.setMessage("Success");
+            authResponse.setUserList(users);
         }
         catch(Exception e){
-            response.setStatusCode(500);
-            response.setMessage("Error getting all userEntities "+e.getMessage());
+            authResponse.setStatusCode(500);
+            authResponse.setMessage("Error getting all userEntities "+e.getMessage());
         }
-        return response;
+        return authResponse;
     }
 
-    public Response getUserByUsername(String username) {
-        Response response = new Response();
+    public AuthResponse getUserByUsername(String username) {
+        AuthResponse authResponse = new AuthResponse();
 
         try{
             UserEntity userEntity = userRepo.findByUsername(username).orElseThrow( ()-> new UsernameNotFoundException("Username "+username+" not found"));
             User user = Utils.mapUserEntitytoUser(userEntity);
-            response.setStatusCode(200);
-            response.setMessage("Success");
-            response.setUser(user);
+            authResponse.setStatusCode(200);
+            authResponse.setMessage("Success");
+            authResponse.setUser(user);
         }
         catch(UsernameNotFoundException e){
-            response.setStatusCode(404);
-            response.setMessage(e.getMessage());
+            authResponse.setStatusCode(404);
+            authResponse.setMessage(e.getMessage());
         }
         catch(Exception e){
-            response.setStatusCode(500);
-            response.setMessage(e.getMessage());
+            authResponse.setStatusCode(500);
+            authResponse.setMessage(e.getMessage());
         }
-        return response;
+        return authResponse;
     }
 
-    public Response deleteUser(String username) {
-        Response response = new Response();
+    public AuthResponse deleteUser(String username) {
+        AuthResponse authResponse = new AuthResponse();
         try{
             userRepo.delete(userRepo.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException(username+" not found")));
-            response.setStatusCode(200);
-            response.setMessage("Success, Deleted user "+username);
+            authResponse.setStatusCode(200);
+            authResponse.setMessage("Success, Deleted user "+username);
         }
         catch (UsernameNotFoundException e){
-            response.setStatusCode(404);
-            response.setMessage(e.getMessage());
+            authResponse.setStatusCode(404);
+            authResponse.setMessage(e.getMessage());
         }
         catch(Exception e){
-            response.setStatusCode(500);
-            response.setMessage(e.getMessage());
+            authResponse.setStatusCode(500);
+            authResponse.setMessage(e.getMessage());
         }
-        return response;
+        return authResponse;
     }
 
-    public Response createUser(UserEntity userEntity) {
-        Response response = new Response();
+    public AuthResponse createUser(UserEntity userEntity) {
+        AuthResponse authResponse = new AuthResponse();
         try{
             if(userEntity.getRole() == null || userEntity.getRole().name().isBlank()){
                 userEntity.setRole(Role.USER);
@@ -96,48 +96,49 @@ public class UserService{
             UserEntity savedUserEntity = userRepo.save(userEntity);
             User savedUser = Utils.mapUserEntitytoUser(savedUserEntity);
 
-            Response loginResponse = loginUser(userEntity.getUsername(), savedUser.getPassword());
-            if(loginResponse.getStatusCode() == 200){
-                response.setStatusCode(201);
-                response.setUser(savedUser);
-                response.setToken(loginResponse.getToken());
-                response.setRole(loginResponse.getRole());
-                response.setExpirationTime(loginResponse.getExpirationTime());
-                response.setMessage("Success, saved user and logged in");
+            AuthResponse loginAuthResponse = loginUser(userEntity.getUsername(), savedUser.getPassword());
+            if(loginAuthResponse.getStatusCode() == 200){
+                authResponse.setStatusCode(201);
+                authResponse.setUser(savedUser);
+                authResponse.setToken(loginAuthResponse.getToken());
+                authResponse.setRole(loginAuthResponse.getRole());
+                authResponse.setExpirationTime(loginAuthResponse.getExpirationTime());
+                authResponse.setMessage("Success, saved user and logged in");
             }
-            else if(loginResponse.getStatusCode() == 500) {
-                response.setStatusCode(201);
-                response.setUser(savedUser);
-                response.setMessage("Success, saved user but failed to login");
+            else if(loginAuthResponse.getStatusCode() == 500) {
+                authResponse.setStatusCode(201);
+                authResponse.setUser(savedUser);
+                authResponse.setMessage("Success, saved user but failed to login");
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        return response;
+        return authResponse;
     }
 
-    public Response loginUser(@NotBlank String username, @NotBlank String password) {
-        Response response = new Response();
+    public AuthResponse loginUser(@NotBlank String username, @NotBlank String password) {
+        AuthResponse authResponse = new AuthResponse();
 
         try{
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
             var user = userRepo.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("Username "+username+" not found"));
 
             var token = jwtUtils.generateToken(user);
-            response.setStatusCode(200);
-            response.setToken(token);
-            response.setRole(user.getRole().name());
-            response.setExpirationTime("7 Days");
-            response.setMessage("successful");
+            authResponse.setStatusCode(200);
+            authResponse.setToken(token);
+            authResponse.setRole(user.getRole().name());
+            authResponse.setUser(Utils.mapUserEntitytoUser(user));
+            authResponse.setExpirationTime("7 Days");
+            authResponse.setMessage("successful");
         }
         catch (UsernameNotFoundException e){
-            response.setStatusCode(404);
-            response.setMessage(e.getMessage());
+            authResponse.setStatusCode(404);
+            authResponse.setMessage(e.getMessage());
         }
         catch (Exception e){
-            response.setStatusCode(500);
-            response.setMessage(e.getMessage());
+            authResponse.setStatusCode(500);
+            authResponse.setMessage(e.getMessage());
         }
-        return response;
+        return authResponse;
     }
 }

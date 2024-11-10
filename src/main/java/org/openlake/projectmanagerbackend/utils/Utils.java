@@ -25,7 +25,12 @@ public class Utils {
         project.setProjectId(projectEntity.getProjectId());
         project.setProjectName(projectEntity.getProjectName());
         project.setProjectDescription(projectEntity.getProjectDescription());
-        project.setCreatedBy(project.getCreatedBy());
+        project.setCreatedBy(projectEntity.getCreatedBy());
+        project.setDate(projectEntity.getDate());
+        project.setProjectImageLink(projectEntity.getProjectImageLink());
+        project.setSourceCodeLink(projectEntity.getSourceCodeLink());
+        project.setTags(projectEntity.getTags());
+        project.setStars(projectEntity.getStars());
         return project;
     }
 

@@ -1,8 +1,7 @@
 package org.openlake.projectmanagerbackend.resource;
 
 import lombok.RequiredArgsConstructor;
-import org.openlake.projectmanagerbackend.domain.Response;
-import org.openlake.projectmanagerbackend.domain.dto.User;
+import org.openlake.projectmanagerbackend.domain.AuthResponse;
 import org.openlake.projectmanagerbackend.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,21 +16,21 @@ public class UserResource {
 
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Response> getAllUsers() {
-        Response response = userService.getAllUsers();
-        return ResponseEntity.status(response.getStatusCode()).body(response);
+    public ResponseEntity<AuthResponse> getAllUsers() {
+        AuthResponse authResponse = userService.getAllUsers();
+        return ResponseEntity.status(authResponse.getStatusCode()).body(authResponse);
     }
 
     @GetMapping("/all/{username}")
-    public ResponseEntity<Response> getUserById(@PathVariable("username") String username) {
-        Response response = userService.getUserByUsername(username);
-        return ResponseEntity.status(response.getStatusCode()).body(response);
+    public ResponseEntity<AuthResponse> getUserById(@PathVariable("username") String username) {
+        AuthResponse authResponse = userService.getUserByUsername(username);
+        return ResponseEntity.status(authResponse.getStatusCode()).body(authResponse);
     }
 
     @DeleteMapping("/all/{username}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Response> deleteUser(@PathVariable("username") String username) {
-        Response response = userService.deleteUser(username);
-        return ResponseEntity.status(response.getStatusCode()).body(response);
+    public ResponseEntity<AuthResponse> deleteUser(@PathVariable("username") String username) {
+        AuthResponse authResponse = userService.deleteUser(username);
+        return ResponseEntity.status(authResponse.getStatusCode()).body(authResponse);
     }
 }

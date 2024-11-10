@@ -27,11 +27,19 @@ public class ProjectEntity {
     private String projectName;
 
     @Column(columnDefinition = "TEXT")
+    @NotNull
     private String projectDescription;
 
     private String createdBy;
 
     private String sourceCodeLink;
+
+    private String projectImageLink;
+
+    private String date;
+
+    @Column(nullable = false, updatable = false)
+    private int stars=0;
 
     @ElementCollection(targetClass = String.class)
     @CollectionTable(name = "project_tags", joinColumns = @JoinColumn(name = "project_id"))
