@@ -48,7 +48,7 @@ public class Utils {
     }
 
     public static String saveImage(MultipartFile image) throws IOException {
-        String UPLOAD_DIR = "uploads";
+        String UPLOAD_DIR = "D:\\Programming\\Projects\\project-manager\\workSync-frontend\\src\\uploads";
         Path uploadPath = Paths.get(UPLOAD_DIR);
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
