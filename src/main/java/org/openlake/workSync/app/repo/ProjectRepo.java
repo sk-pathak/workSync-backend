@@ -11,8 +11,9 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface ProjectRepo extends JpaRepository<ProjectEntity, Long> {
+    List<ProjectEntity> findAll();
     @Nonnull
-    Page<ProjectEntity> findAll( Pageable pageable);
+    Page<ProjectEntity> findAll(Pageable pageable);
 
     boolean existsByProjectName(String projectName);
 

@@ -40,21 +40,29 @@ public class ProjectService {
         Page<ProjectEntity> projectEntities;
         try{
             if(sortBy != null && !sortBy.isEmpty()) {
-                List<String> allowedSortFields = Arrays.asList("projectName", "date", "stars");
+                List<String> allowedSortFields = Arrays.asList("name", "date", "stars");
                 if (!allowedSortFields.contains(sortBy)) {
                     projectResponse.setStatusCode(400);
                     projectResponse.setMessage("Invalid sort field: "+sortBy);
                     return projectResponse;
                 }
+                String actualSortField = Utils.mapSortField(sortBy);
                 if(order != null && !order.isEmpty()) {
                     Sort.Direction direction = order.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
-                    pageable = PageRequest.of(page, size, direction, sortBy);
+                    pageable = PageRequest.of(page, size, direction, actualSortField);
                 }
                 else {
-                    pageable = PageRequest.of(page, size,Sort.by(sortBy));
+                    pageable = PageRequest.of(page, size, Sort.Direction.ASC,actualSortField);
                 }
             }
             if(searchTerm != null && !searchTerm.isEmpty()) {
+                if(sortBy!=null && sortBy.equals("name")){
+                    Sort.Direction direction = Sort.Direction.ASC;
+                    if(order != null && !order.isEmpty()) {
+                        direction = order.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+                    }
+                    pageable = PageRequest.of(page, size, direction, "project_name");
+                }
                 projectEntities = projectRepo.searchKey(searchTerm, pageable);
             }
             else {

@@ -64,4 +64,13 @@ public class Utils {
         filePath = uploadPath.resolve(fileName);
         return filePath.toString();
     }
+
+    public static String mapSortField(String sortBy) {
+        return switch (sortBy) {
+            case "name" -> "projectName";
+            case "date" -> "date";
+            case "stars" -> "stars";
+            default -> throw new IllegalArgumentException("Invalid sort field: " + sortBy);
+        };
+    }
 }
