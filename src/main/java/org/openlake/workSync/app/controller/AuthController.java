@@ -1,11 +1,14 @@
 package org.openlake.workSync.app.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.openlake.workSync.app.domain.AuthResponse;
+import org.openlake.workSync.app.domain.entity.ProjectEntity;
 import org.openlake.workSync.app.domain.entity.UserEntity;
 import org.openlake.workSync.app.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -17,8 +20,9 @@ public class AuthController {
     private final UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody UserEntity userEntity) {
-        AuthResponse authResponse = userService.createUser(userEntity);
+    public ResponseEntity<AuthResponse> register(@RequestPart("user") @Valid UserEntity userEntity,
+                                                 @RequestPart(value = "image", required = false) MultipartFile image) {
+        AuthResponse authResponse = userService.createUser(userEntity, image);
         return ResponseEntity.status(authResponse.getStatusCode()).body(authResponse);
     }
 

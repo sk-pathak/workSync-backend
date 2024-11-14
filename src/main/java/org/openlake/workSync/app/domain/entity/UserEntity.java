@@ -40,6 +40,8 @@ public class UserEntity implements UserDetails {
     @NotNull(message = "Username cannot be empty or null")
     private String username;
 
+    private String userProfile;
+
     @NotNull(message = "Password cannot be empty or null")
     private String password;
 

@@ -22,6 +22,7 @@ public class Utils {
         user.setEmail(userEntity.getEmail());
         user.setPassword(userEntity.getPassword());
         user.setRole(userEntity.getRole());
+        user.setUserProfile(userEntity.getUserProfile());
         return user;
     }
 
@@ -48,7 +49,7 @@ public class Utils {
     }
 
     public static String saveImage(MultipartFile image) throws IOException {
-        String UPLOAD_DIR = "D:\\Programming\\Projects\\project-manager\\workSync-frontend\\src\\uploads";
+        String UPLOAD_DIR = "D:\\Programming\\Projects\\workSync\\workSync-frontend\\uploads";
         Path uploadPath = Paths.get(UPLOAD_DIR);
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
@@ -58,6 +59,9 @@ public class Utils {
         Path filePath = uploadPath.resolve(fileName);
         Files.copy(image.getInputStream(), filePath);
 
+        // to set local path from frontend in database
+        uploadPath = Paths.get("uploads");
+        filePath = uploadPath.resolve(fileName);
         return filePath.toString();
     }
 }

@@ -13,6 +13,7 @@ import org.openlake.workSync.app.utils.Utils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -164,6 +167,63 @@ public class ProjectService {
         catch (Exception e){
             projectResponse.setStatusCode(500);
             projectResponse.setMessage("Error updating project: "+e.getMessage());
+        }
+        return projectResponse;
+    }
+
+    public ProjectResponse searchKey(String searchTerm, int page, int size) {
+        ProjectResponse projectResponse = new ProjectResponse();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ProjectEntity> projectEntities = projectRepo.searchKey(searchTerm, pageable);
+        try{
+            List<Project> projects = Utils.mapProjectListEntityToProjectList(projectEntities.getContent());
+            long total = projectEntities.getTotalElements();
+            boolean hasMore = projectEntities.hasNext();
+
+            projectResponse.setStatusCode(200);
+            projectResponse.setMessage("Success");
+            projectResponse.setProjectList(projects);
+            projectResponse.setTotalCount(total);
+            projectResponse.setTotalPages(projectEntities.getTotalPages());
+            projectResponse.setCurrentPage(page);
+            projectResponse.setHasMore(hasMore);
+        }
+        catch (Exception e){
+            projectResponse.setStatusCode(500);
+            projectResponse.setMessage("Error getting projects: "+e.getMessage());
+        }
+        return projectResponse;
+    }
+
+    public ProjectResponse getSorted(String sortBy, int page, int size) {
+        List<String> allowedSortFields = Arrays.asList("projectName", "date", "stars");
+        ProjectResponse projectResponse = new ProjectResponse();
+
+        if (!allowedSortFields.contains(sortBy)) {
+            projectResponse.setStatusCode(400);
+            projectResponse.setMessage("Invalid sort field: "+sortBy);
+            return projectResponse;
+        }
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        try{
+            Page<ProjectEntity> projectEntities = projectRepo.findAll(pageable);
+            List<Project> projects = Utils.mapProjectListEntityToProjectList(projectEntities.getContent());
+
+            long total = projectRepo.count();
+            boolean hasMore = projectEntities.hasNext();
+
+            projectResponse.setStatusCode(200);
+            projectResponse.setMessage("Success");
+            projectResponse.setProjectList(projects);
+            projectResponse.setTotalCount(total);
+            projectResponse.setTotalPages(projectEntities.getTotalPages());
+            projectResponse.setCurrentPage(page);
+            projectResponse.setHasMore(hasMore);
+        }
+        catch (Exception e){
+            projectResponse.setStatusCode(500);
+            projectResponse.setMessage("Error getting projects: "+e.getMessage());
         }
         return projectResponse;
     }

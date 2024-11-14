@@ -49,4 +49,22 @@ public class ProjectController {
         ProjectResponse projectResponse = projectService.addUserToProject(projectId);
         return ResponseEntity.status(projectResponse.getStatusCode()).body(projectResponse);
     }
+
+    @GetMapping( "/all/search")
+    public ResponseEntity<ProjectResponse> searchProjects(
+            @RequestParam String searchTerm,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        ProjectResponse projectResponse = projectService.searchKey(searchTerm, page, size);
+        return ResponseEntity.status(projectResponse.getStatusCode()).body(projectResponse);
+    }
+
+    @GetMapping("/all/sort")
+    public ResponseEntity<ProjectResponse> getSortedProjects(
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        ProjectResponse projectResponse = projectService.getSorted(sortBy, page, size);
+        return ResponseEntity.status(projectResponse.getStatusCode()).body(projectResponse);
+    }
 }

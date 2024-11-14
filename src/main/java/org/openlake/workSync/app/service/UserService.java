@@ -16,7 +16,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @Service
@@ -83,7 +85,7 @@ public class UserService{
         return authResponse;
     }
 
-    public AuthResponse createUser(UserEntity userEntity) {
+    public AuthResponse createUser(UserEntity userEntity, MultipartFile image) {
         AuthResponse authResponse = new AuthResponse();
         try{
             if(userEntity.getRole() == null || userEntity.getRole().name().isBlank()){
@@ -93,6 +95,22 @@ public class UserService{
                 throw new Exception(userEntity.getUsername()+" already exists");
             }
             userEntity.setPassword(new BCryptPasswordEncoder().encode(userEntity.getPassword()));
+            if(image!=null){
+                try {
+                    if(image.getSize() > 5*1024*1024){
+                        authResponse.setStatusCode(400);
+                        authResponse.setMessage("Image too large");
+                        return authResponse;
+                    }
+                    String imagePath = Utils.saveImage(image);
+                    userEntity.setUserProfile(imagePath);
+                }
+                catch (IOException e){
+                    authResponse.setStatusCode(400);
+                    authResponse.setMessage(e.getMessage());
+                    return authResponse;
+                }
+            }
             UserEntity savedUserEntity = userRepo.save(userEntity);
             User savedUser = Utils.mapUserEntitytoUser(savedUserEntity);
 
