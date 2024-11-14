@@ -21,7 +21,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -35,14 +34,36 @@ public class ProjectService {
     private final ProjectRepo projectRepo;
     private final UserRepo userRepo;
 
-    public ProjectResponse getAllProjects(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public ProjectResponse getAllProjects(String searchTerm, String sortBy, String order, int page, int size) {
         ProjectResponse projectResponse = new ProjectResponse();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ProjectEntity> projectEntities;
         try{
-            Page<ProjectEntity> projectEntities = projectRepo.findAll(pageable);
+            if(sortBy != null && !sortBy.isEmpty()) {
+                List<String> allowedSortFields = Arrays.asList("projectName", "date", "stars");
+                if (!allowedSortFields.contains(sortBy)) {
+                    projectResponse.setStatusCode(400);
+                    projectResponse.setMessage("Invalid sort field: "+sortBy);
+                    return projectResponse;
+                }
+                if(order != null && !order.isEmpty()) {
+                    Sort.Direction direction = order.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+                    pageable = PageRequest.of(page, size, direction, sortBy);
+                }
+                else {
+                    pageable = PageRequest.of(page, size,Sort.by(sortBy));
+                }
+            }
+            if(searchTerm != null && !searchTerm.isEmpty()) {
+                projectEntities = projectRepo.searchKey(searchTerm, pageable);
+            }
+            else {
+                projectEntities = projectRepo.findAll(pageable);
+            }
+
             List<Project> projects = Utils.mapProjectListEntityToProjectList(projectEntities.getContent());
 
-            long total = projectRepo.count();
+            long total = projectEntities.getTotalElements();
             boolean hasMore = projectEntities.hasNext();
 
             projectResponse.setStatusCode(200);
@@ -167,63 +188,6 @@ public class ProjectService {
         catch (Exception e){
             projectResponse.setStatusCode(500);
             projectResponse.setMessage("Error updating project: "+e.getMessage());
-        }
-        return projectResponse;
-    }
-
-    public ProjectResponse searchKey(String searchTerm, int page, int size) {
-        ProjectResponse projectResponse = new ProjectResponse();
-        Pageable pageable = PageRequest.of(page, size);
-        Page<ProjectEntity> projectEntities = projectRepo.searchKey(searchTerm, pageable);
-        try{
-            List<Project> projects = Utils.mapProjectListEntityToProjectList(projectEntities.getContent());
-            long total = projectEntities.getTotalElements();
-            boolean hasMore = projectEntities.hasNext();
-
-            projectResponse.setStatusCode(200);
-            projectResponse.setMessage("Success");
-            projectResponse.setProjectList(projects);
-            projectResponse.setTotalCount(total);
-            projectResponse.setTotalPages(projectEntities.getTotalPages());
-            projectResponse.setCurrentPage(page);
-            projectResponse.setHasMore(hasMore);
-        }
-        catch (Exception e){
-            projectResponse.setStatusCode(500);
-            projectResponse.setMessage("Error getting projects: "+e.getMessage());
-        }
-        return projectResponse;
-    }
-
-    public ProjectResponse getSorted(String sortBy, int page, int size) {
-        List<String> allowedSortFields = Arrays.asList("projectName", "date", "stars");
-        ProjectResponse projectResponse = new ProjectResponse();
-
-        if (!allowedSortFields.contains(sortBy)) {
-            projectResponse.setStatusCode(400);
-            projectResponse.setMessage("Invalid sort field: "+sortBy);
-            return projectResponse;
-        }
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
-        try{
-            Page<ProjectEntity> projectEntities = projectRepo.findAll(pageable);
-            List<Project> projects = Utils.mapProjectListEntityToProjectList(projectEntities.getContent());
-
-            long total = projectRepo.count();
-            boolean hasMore = projectEntities.hasNext();
-
-            projectResponse.setStatusCode(200);
-            projectResponse.setMessage("Success");
-            projectResponse.setProjectList(projects);
-            projectResponse.setTotalCount(total);
-            projectResponse.setTotalPages(projectEntities.getTotalPages());
-            projectResponse.setCurrentPage(page);
-            projectResponse.setHasMore(hasMore);
-        }
-        catch (Exception e){
-            projectResponse.setStatusCode(500);
-            projectResponse.setMessage("Error getting projects: "+e.getMessage());
         }
         return projectResponse;
     }
