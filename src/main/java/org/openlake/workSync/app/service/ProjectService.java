@@ -185,6 +185,11 @@ public class ProjectService {
             UserEntity userEntity = userRepo.findByUsername(username).orElseThrow(()-> new RuntimeException("User not logged in"));
 
             ProjectEntity projectEntity = projectRepo.findById(projectId).orElseThrow(()-> new RuntimeException("Project not found"));
+            if(projectEntity.getUserEntities().contains(userEntity)){
+                projectResponse.setStatusCode(400);
+                projectResponse.setMessage("User already exists");
+                return projectResponse;
+            }
             projectEntity.getUserEntities().add(userEntity);
 
             ProjectEntity savedProjectEntity = projectRepo.save(projectEntity);

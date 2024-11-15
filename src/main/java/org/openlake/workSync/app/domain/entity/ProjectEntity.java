@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.openlake.workSync.app.domain.enumeration.ProjectStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +38,9 @@ public class ProjectEntity {
     private String projectImageLink;
 
     private String date;
+
+    @Enumerated(EnumType.STRING)
+    private ProjectStatus projectStatus=ProjectStatus.ACTIVE;
 
     @Column(nullable = false, updatable = false)
     private int stars=0;

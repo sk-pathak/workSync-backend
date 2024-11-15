@@ -35,6 +35,7 @@ public class Utils {
         project.setDate(projectEntity.getDate());
         project.setProjectImageLink(projectEntity.getProjectImageLink());
         project.setSourceCodeLink(projectEntity.getSourceCodeLink());
+        project.setProjectStatus(projectEntity.getProjectStatus());
         project.setTags(projectEntity.getTags());
         project.setStars(projectEntity.getStars());
         return project;
@@ -60,7 +61,7 @@ public class Utils {
         Files.copy(image.getInputStream(), filePath);
 
         // to set local path from frontend in database
-        uploadPath = Paths.get("uploads");
+        uploadPath = Paths.get("\\uploads");
         filePath = uploadPath.resolve(fileName);
         return filePath.toString();
     }
