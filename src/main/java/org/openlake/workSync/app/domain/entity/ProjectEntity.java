@@ -39,6 +39,10 @@ public class ProjectEntity {
 
     private String date;
 
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "project_id")
+    private List<ProjectLinkEntity> projectLinkEntities;
+
     @Enumerated(EnumType.STRING)
     private ProjectStatus projectStatus=ProjectStatus.ACTIVE;
 

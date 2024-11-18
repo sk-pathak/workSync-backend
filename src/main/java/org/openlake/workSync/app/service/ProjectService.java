@@ -220,6 +220,7 @@ public class ProjectService {
                 projectEntity1.setSourceCodeLink(projectEntity.getSourceCodeLink());
                 projectEntity1.setStars(projectEntity.getStars());
                 projectEntity1.setTags(projectEntity.getTags());
+                projectEntity1.setProjectLinkEntities(projectEntity.getProjectLinkEntities());
 
                 ProjectEntity savedProjectEntity = projectRepo.save(projectEntity1);
                 Project savedProject = Utils.mapProjectEntitytoProject(savedProjectEntity);

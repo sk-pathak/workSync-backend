@@ -1,8 +1,10 @@
 package org.openlake.workSync.app.utils;
 
 import org.openlake.workSync.app.domain.dto.Project;
+import org.openlake.workSync.app.domain.dto.ProjectLink;
 import org.openlake.workSync.app.domain.dto.User;
 import org.openlake.workSync.app.domain.entity.ProjectEntity;
+import org.openlake.workSync.app.domain.entity.ProjectLinkEntity;
 import org.openlake.workSync.app.domain.entity.UserEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,6 +28,15 @@ public class Utils {
         return user;
     }
 
+    private static ProjectLink mapProjectLinkEntitytoProjectLink(ProjectLinkEntity projectLinkEntity) {
+        ProjectLink projectLink = new ProjectLink();
+        projectLink.setLinkId(projectLinkEntity.getLinkId());
+        projectLink.setLinkName(projectLinkEntity.getLinkName());
+        projectLink.setLinkUrl(projectLinkEntity.getLinkUrl());
+        projectLink.setLinkDesc(projectLinkEntity.getLinkDesc());
+        return projectLink;
+    }
+
     public static Project mapProjectEntitytoProject(ProjectEntity projectEntity) {
         Project project = new Project();
         project.setProjectId(projectEntity.getProjectId());
@@ -39,6 +50,7 @@ public class Utils {
         project.setTags(projectEntity.getTags());
         project.setStars(projectEntity.getStars());
         project.setUsers(projectEntity.getUserEntities().stream().map(Utils::mapUserEntitytoUser).collect(Collectors.toList()));
+        project.setProjectLinks(projectEntity.getProjectLinkEntities().stream().map(Utils::mapProjectLinkEntitytoProjectLink).collect(Collectors.toList()));
         return project;
     }
 

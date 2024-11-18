@@ -19,5 +19,6 @@ public class Project {
     private String date;
     private int stars;
     private List<String> tags;
+    private List<ProjectLink> projectLinks;
     private List<User> users;
 }
