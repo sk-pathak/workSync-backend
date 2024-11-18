@@ -38,6 +38,7 @@ public class Utils {
         project.setProjectStatus(projectEntity.getProjectStatus());
         project.setTags(projectEntity.getTags());
         project.setStars(projectEntity.getStars());
+        project.setUsers(projectEntity.getUserEntities().stream().map(Utils::mapUserEntitytoUser).collect(Collectors.toList()));
         return project;
     }
 

@@ -52,4 +52,10 @@ public class ProjectController {
         ProjectResponse projectResponse = projectService.addUserToProject(projectId);
         return ResponseEntity.status(projectResponse.getStatusCode()).body(projectResponse);
     }
+
+    @PutMapping("/update/{projectId}")
+    public ResponseEntity<ProjectResponse> updateProject(@PathVariable Long projectId, @RequestBody ProjectEntity projectEntity) {
+        ProjectResponse projectResponse = projectService.updateProject(projectId, projectEntity);
+        return ResponseEntity.status(projectResponse.getStatusCode()).body(projectResponse);
+    }
 }

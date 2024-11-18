@@ -19,5 +19,6 @@ public class User {
     private String password;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Role role;
+    private String projectRole;
     private List<Project> projects;
 }

@@ -48,6 +48,8 @@ public class UserEntity implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    private String projectRole="";
+
     @ManyToMany(mappedBy = "userEntities",cascade = CascadeType.MERGE)
     @JsonIgnoreProperties("userEntities")
     private List<ProjectEntity> projectEntities = new ArrayList<>();

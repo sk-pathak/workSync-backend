@@ -204,4 +204,38 @@ public class ProjectService {
         }
         return projectResponse;
     }
+
+    public ProjectResponse updateProject(Long projectId, ProjectEntity projectEntity) {
+        ProjectResponse projectResponse = new ProjectResponse();
+        try{
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+
+            if(projectEntity.getCreatedBy().equals(username)) {
+                ProjectEntity projectEntity1 = projectRepo.findById(projectId).orElseThrow(() -> new RuntimeException("Project not found"));
+                projectEntity1.setProjectName(projectEntity.getProjectName());
+                projectEntity1.setProjectDescription(projectEntity.getProjectDescription());
+                projectEntity1.setProjectStatus(projectEntity.getProjectStatus());
+                projectEntity1.setProjectImageLink(projectEntity.getProjectImageLink());
+                projectEntity1.setSourceCodeLink(projectEntity.getSourceCodeLink());
+                projectEntity1.setStars(projectEntity.getStars());
+                projectEntity1.setTags(projectEntity.getTags());
+
+                ProjectEntity savedProjectEntity = projectRepo.save(projectEntity1);
+                Project savedProject = Utils.mapProjectEntitytoProject(savedProjectEntity);
+                projectResponse.setStatusCode(201);
+                projectResponse.setMessage("Success, updated project");
+                projectResponse.setProject(savedProject);
+            }
+            else {
+                projectResponse.setStatusCode(400);
+                projectResponse.setMessage("Not authorized to update project");
+            }
+        }
+        catch (Exception e){
+            projectResponse.setStatusCode(500);
+            projectResponse.setMessage("Error updating project: "+e.getMessage());
+        }
+        return projectResponse;
+    }
 }
