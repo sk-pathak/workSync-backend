@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>org.openlake</groupId>
-	<artifactId>projectEntity-manager-backend</artifactId>
+	<artifactId>workSync-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>projectEntity-manager-backend</name>
-	<description>projectEntity-manager-backend</description>
+	<name>workSync-backend</name>
+	<description>workSync-backend</description>
 	<url/>
 	<licenses>
 		<license/>
