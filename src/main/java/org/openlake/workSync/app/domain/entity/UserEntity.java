@@ -50,9 +50,13 @@ public class UserEntity implements UserDetails {
 
     private String projectRole="";
 
-    @ManyToMany(mappedBy = "userEntities",cascade = CascadeType.MERGE)
+    @ManyToMany(mappedBy = "userEntities", cascade = CascadeType.MERGE)
     @JsonIgnoreProperties("userEntities")
     private List<ProjectEntity> projectEntities = new ArrayList<>();
+
+    @ManyToMany(mappedBy = "userStarredEntities", cascade = CascadeType.MERGE)
+    @JsonIgnoreProperties("userStarredEntities")
+    private List<ProjectEntity> projectStarredEntities = new ArrayList<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

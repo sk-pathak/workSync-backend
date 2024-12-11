@@ -53,6 +53,12 @@ public class ProjectController {
         return ResponseEntity.status(projectResponse.getStatusCode()).body(projectResponse);
     }
 
+    @PutMapping("/star/{projectId}")
+    public ResponseEntity<ProjectResponse> starProject(@PathVariable Long projectId) {
+        ProjectResponse projectResponse = projectService.starProject(projectId);
+        return ResponseEntity.status(projectResponse.getStatusCode()).body(projectResponse);
+    }
+
     @PutMapping("/update/{projectId}")
     public ResponseEntity<ProjectResponse> updateProject(@PathVariable Long projectId, @RequestBody ProjectEntity projectEntity) {
         ProjectResponse projectResponse = projectService.updateProject(projectId, projectEntity);

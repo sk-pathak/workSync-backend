@@ -61,4 +61,12 @@ public class ProjectEntity {
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     private List<UserEntity> userEntities = new ArrayList<>();
+
+    @ManyToMany(cascade = CascadeType.MERGE)
+    @JoinTable(
+            name = "project_starred",
+            joinColumns = @JoinColumn(name = "project_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private List<UserEntity> userStarredEntities = new ArrayList<>();
 }

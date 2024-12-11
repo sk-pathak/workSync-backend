@@ -21,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -234,6 +235,35 @@ public class ProjectService {
             }
         }
         catch (Exception e){
+            projectResponse.setStatusCode(500);
+            projectResponse.setMessage("Error updating project: "+e.getMessage());
+        }
+        return projectResponse;
+    }
+
+    public ProjectResponse starProject(Long projectId) {
+        ProjectResponse projectResponse = new ProjectResponse();
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String username = authentication.getName();
+            UserEntity userEntity = userRepo.findByUsername(username).orElseThrow(()->new RuntimeException("User must be logged in"));
+            ProjectEntity projectEntity = projectRepo.findById(projectId).orElseThrow(()->new RuntimeException("Project Not Found"));
+            if(!projectEntity.getUserStarredEntities().contains(userEntity)) {
+                projectEntity.getUserStarredEntities().add(userEntity);
+                projectEntity.setStars(projectEntity.getStars()+1);
+            }
+            else {
+                projectEntity.getUserStarredEntities().remove(userEntity);
+                projectEntity.setStars(projectEntity.getStars()-1);
+            }
+
+            ProjectEntity savedProjectEntity = projectRepo.save(projectEntity);
+            Project savedProject = Utils.mapProjectEntitytoProject(savedProjectEntity);
+            projectResponse.setProject(savedProject);
+            projectResponse.setStatusCode(200);
+            projectResponse.setMessage("starred successfully");
+        }
+        catch (Exception e) {
             projectResponse.setStatusCode(500);
             projectResponse.setMessage("Error updating project: "+e.getMessage());
         }

@@ -50,6 +50,7 @@ public class Utils {
         project.setTags(projectEntity.getTags());
         project.setStars(projectEntity.getStars());
         project.setUsers(projectEntity.getUserEntities().stream().map(Utils::mapUserEntitytoUser).collect(Collectors.toList()));
+        project.setStarredBy(projectEntity.getUserStarredEntities().stream().map(Utils::mapUserEntitytoUser).collect(Collectors.toList()));
         project.setProjectLinks(projectEntity.getProjectLinkEntities().stream().map(Utils::mapProjectLinkEntitytoProjectLink).collect(Collectors.toList()));
         return project;
     }

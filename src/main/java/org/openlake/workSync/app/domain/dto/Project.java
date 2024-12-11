@@ -20,5 +20,6 @@ public class Project {
     private int stars;
     private List<String> tags;
     private List<ProjectLink> projectLinks;
+    private List<User> starredBy;
     private List<User> users;
 }
