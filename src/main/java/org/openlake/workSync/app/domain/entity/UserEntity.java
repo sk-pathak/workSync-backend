@@ -26,8 +26,8 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class UserEntity implements UserDetails {
     @Id
-    @Column(updatable = false, nullable = false, unique = true)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(updatable = false, nullable = false, unique = true)
     private Long userId;
 
     @NotNull(message = "Enter valid name")

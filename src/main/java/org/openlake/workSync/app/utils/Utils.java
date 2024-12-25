@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,7 +39,12 @@ public class Utils {
     }
 
     public static Project mapProjectEntitytoProject(ProjectEntity projectEntity) {
+        if (projectEntity == null) {
+            throw new IllegalArgumentException("ProjectEntity cannot be null");
+        }
+
         Project project = new Project();
+
         project.setProjectId(projectEntity.getProjectId());
         project.setProjectName(projectEntity.getProjectName());
         project.setProjectDescription(projectEntity.getProjectDescription());
@@ -49,11 +55,34 @@ public class Utils {
         project.setProjectStatus(projectEntity.getProjectStatus());
         project.setTags(projectEntity.getTags());
         project.setStars(projectEntity.getStars());
-        project.setUsers(projectEntity.getUserEntities().stream().map(Utils::mapUserEntitytoUser).collect(Collectors.toList()));
-        project.setStarredBy(projectEntity.getUserStarredEntities().stream().map(Utils::mapUserEntitytoUser).collect(Collectors.toList()));
-        project.setProjectLinks(projectEntity.getProjectLinkEntities().stream().map(Utils::mapProjectLinkEntitytoProjectLink).collect(Collectors.toList()));
+
+        if (projectEntity.getUserEntities() != null && !projectEntity.getUserEntities().isEmpty()) {
+            project.setUsers(projectEntity.getUserEntities().stream()
+                    .map(Utils::mapUserEntitytoUser)
+                    .collect(Collectors.toList()));
+        } else {
+            project.setUsers(new ArrayList<>());
+        }
+
+        if (projectEntity.getUserStarredEntities() != null && !projectEntity.getUserStarredEntities().isEmpty()) {
+            project.setStarredBy(projectEntity.getUserStarredEntities().stream()
+                    .map(Utils::mapUserEntitytoUser)
+                    .collect(Collectors.toList()));
+        } else {
+            project.setStarredBy(new ArrayList<>());
+        }
+
+        if (projectEntity.getProjectLinkEntities() != null && !projectEntity.getProjectLinkEntities().isEmpty()) {
+            project.setProjectLinks(projectEntity.getProjectLinkEntities().stream()
+                    .map(Utils::mapProjectLinkEntitytoProjectLink)
+                    .collect(Collectors.toList()));
+        } else {
+            project.setProjectLinks(new ArrayList<>());
+        }
+
         return project;
     }
+
 
     public static List<User> mapUserListEntityToUserList(List<UserEntity> userListEntity) {
         return userListEntity.stream().map(Utils::mapUserEntitytoUser).collect(Collectors.toList());
