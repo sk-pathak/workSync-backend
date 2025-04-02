@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: workSync
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:password}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:project_manager}
+  jpa:
+    generate-ddl: true
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+      enabled: true
+  kafka:
+    consumer:
+      group-id: chat-consumer-group
+      bootstrap-servers: localhost:9093
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+jwt:
+  secretKey: ${JWT_SECRET:296478f9e31454f4204aaf9e89815361818a3b879e3e984af41b2dcf8cd6ae7bc4f41b1a10e0233dc0522444df22057f2030d9643bc3829f61ae99d8f2790178ebbdf87873b847c9f24fe6221046371591aacc0c0e73b2488c2f6d618ac36f220c9dd380230db2d8d9b40eb7a805ec356cde7c24eb39a785529a723f501f01aa6a772c6728dad0b7b6efae12630c33bf0d478f43c2234f14d040365da5148b838ecd96c4a7e07ffa99a923d2d27b82375b0632e04ab4be1f9d77ae7336fd088693c0da5054da9304b28bbfac9e340c8a2120f13b8204af3a90937cd672987f6d8dc4d8b1716345035871a9c50c0c54dbdc8dcbdfdf5f8daf3dee28f40a32535b}
+
+server:
+  error:
+    path: /error
+    whitelabel:
+      enabled: false

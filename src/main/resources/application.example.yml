@@ -1,11 +1,11 @@
 spring:
   application:
-    name: projectManager
+    name: workSync
   datasource:
     driver-class-name: org.postgresql.Driver
-    username: ${username}
-    password: ${password}
-    url: jdbc:postgresql://localhost:5432/${dbname}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:password}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:project_manager}
   jpa:
     generate-ddl: true
     show-sql: true
@@ -18,4 +18,10 @@ spring:
       max-request-size: 5MB
       enabled: true
 jwt:
-  secretKey: ${key}
+  secretKey: ${JWT_SECRET:default-secret}
+
+server:
+  error:
+    path: /error
+    whitelabel:
+      enabled: false
