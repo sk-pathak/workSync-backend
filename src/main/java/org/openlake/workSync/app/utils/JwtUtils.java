@@ -20,6 +20,7 @@ public class JwtUtils {
     private final SecretKey Key;
 
     public JwtUtils(@Value("${jwt.secretKey}") String secretKey) {
+        System.out.println(secretKey);
         byte[] keyBytes = Base64.getDecoder().decode(secretKey.getBytes(StandardCharsets.UTF_8));
         this.Key = new SecretKeySpec(keyBytes, "HmacSHA256");
     }
