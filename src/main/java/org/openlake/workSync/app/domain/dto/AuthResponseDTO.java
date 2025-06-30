@@ -1,16 +1,16 @@
-package org.openlake.workSync.app.domain;
+package org.openlake.workSync.app.domain.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.openlake.workSync.app.domain.dto.User;
+import org.openlake.workSync.app.domain.Response;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class AuthResponse extends Response {
+public class AuthResponseDTO extends Response {
     private String token;
     private String role;
     private String expirationTime;
-    private User user;
+    private UserResponseDTO user;
 }

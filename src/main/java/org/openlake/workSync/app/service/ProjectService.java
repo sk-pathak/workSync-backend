@@ -3,7 +3,6 @@ package org.openlake.workSync.app.service;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.openlake.workSync.app.domain.ProjectResponse;
 import org.openlake.workSync.app.domain.dto.Project;
 import org.openlake.workSync.app.domain.entity.ProjectEntity;
 import org.openlake.workSync.app.domain.entity.UserEntity;

@@ -4,7 +4,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.openlake.workSync.app.domain.AuthResponse;
+import org.openlake.workSync.app.domain.dto.AuthResponse;
 import org.openlake.workSync.app.domain.dto.User;
 import org.openlake.workSync.app.domain.entity.UserEntity;
 import org.openlake.workSync.app.domain.enumeration.Role;

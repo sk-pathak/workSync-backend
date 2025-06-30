@@ -1,0 +1,3 @@
+DROP TABLE user_roles CASCADE ;
+DROP TABLE user_profiles CASCADE;
+DROP TABLE roles CASCADE;

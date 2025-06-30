@@ -1,10 +1,8 @@
 package org.openlake.workSync.app.utils;
 
 import org.openlake.workSync.app.domain.dto.Project;
-import org.openlake.workSync.app.domain.dto.ProjectLink;
 import org.openlake.workSync.app.domain.dto.User;
 import org.openlake.workSync.app.domain.entity.ProjectEntity;
-import org.openlake.workSync.app.domain.entity.ProjectLinkEntity;
 import org.openlake.workSync.app.domain.entity.UserEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,7 +16,7 @@ import java.util.stream.Collectors;
 
 public class Utils {
 
-    public static User mapUserEntitytoUser(UserEntity userEntity) {
+    public static User mapUserEntitytoUser(User user) {
         User user = new User();
         user.setUserId(userEntity.getUserId());
         user.setName(userEntity.getName());
@@ -90,23 +88,6 @@ public class Utils {
 
     public static List<Project> mapProjectListEntityToProjectList(List<ProjectEntity> projectListEntity) {
         return projectListEntity.stream().map(Utils::mapProjectEntitytoProject).collect(Collectors.toList());
-    }
-
-    public static String saveImage(MultipartFile image) throws IOException {
-        String UPLOAD_DIR = "D:\\Programming\\Projects\\workSync\\workSync-frontend\\uploads";
-        Path uploadPath = Paths.get(UPLOAD_DIR);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        String fileName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
-        Path filePath = uploadPath.resolve(fileName);
-        Files.copy(image.getInputStream(), filePath);
-
-        // to set local path from frontend in database
-        uploadPath = Paths.get("\\uploads");
-        filePath = uploadPath.resolve(fileName);
-        return filePath.toString();
     }
 
     public static String mapSortField(String sortBy) {

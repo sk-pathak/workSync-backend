@@ -2,7 +2,6 @@ package org.openlake.workSync.app.controller.rest;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.openlake.workSync.app.domain.ProjectResponse;
 import org.openlake.workSync.app.domain.entity.ProjectEntity;
 import org.openlake.workSync.app.service.ProjectService;
 import org.springframework.http.ResponseEntity;
