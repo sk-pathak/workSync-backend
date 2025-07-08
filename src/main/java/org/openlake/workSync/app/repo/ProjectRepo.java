@@ -1,27 +1,23 @@
 package org.openlake.workSync.app.repo;
 
-import jakarta.annotation.Nonnull;
-import org.openlake.workSync.app.domain.entity.ProjectEntity;
+import org.openlake.workSync.app.domain.entity.Project;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.util.UUID;
 
-public interface ProjectRepo extends JpaRepository<ProjectEntity, Long> {
-    List<ProjectEntity> findAll();
-    @Nonnull
-    Page<ProjectEntity> findAll(Pageable pageable);
+@Repository
+public interface ProjectRepo extends JpaRepository<Project, UUID> {
+    @Query("SELECT p FROM Project p WHERE p.owner.id = :ownerId")
+    Page<Project> findByOwnerId(@Param("ownerId") UUID ownerId, Pageable pageable);
 
-    boolean existsByProjectName(String projectName);
+    @Query("SELECT p FROM Project p JOIN p.members m WHERE m.id = :userId")
+    Page<Project> findByMemberId(@Param("userId") UUID userId, Pageable pageable);
 
-    @Query(value = "SELECT DISTINCT p.* FROM project p " +
-            "JOIN project_tags t ON p.project_id = t.project_id " +
-            "WHERE LOWER(p.project_name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
-            "OR LOWER(p.project_description) LIKE LOWER(CONCAT('%', :searchTerm, '%')) " +
-            "OR LOWER(t.tags) LIKE LOWER(CONCAT('%', :searchTerm, '%'))",
-            nativeQuery = true)
-    Page<ProjectEntity> searchKey(@Param("searchTerm") String searchTerm, Pageable pageable);
+    @Query("SELECT p FROM Project p JOIN p.starredByUsers s WHERE s.id = :userId")
+    Page<Project> findByStarredUserId(@Param("userId") UUID userId, Pageable pageable);
 }
