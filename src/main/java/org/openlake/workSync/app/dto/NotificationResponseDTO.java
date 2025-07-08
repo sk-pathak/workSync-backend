@@ -1,4 +1,4 @@
-package org.openlake.workSync.app.domain.dto;
+package org.openlake.workSync.app.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

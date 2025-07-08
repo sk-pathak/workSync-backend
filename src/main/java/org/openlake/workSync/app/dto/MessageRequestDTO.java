@@ -1,4 +1,4 @@
-package org.openlake.workSync.app.domain.dto;
+package org.openlake.workSync.app.dto;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
