@@ -78,7 +78,7 @@ public class User implements UserDetails {
     private Set<Project> starredProjects = new HashSet<>();
 
     @Builder.Default
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "recipient", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Notification> notifications = new ArrayList<>();
 
     @OneToMany(mappedBy = "assignedTo")

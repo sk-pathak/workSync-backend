@@ -24,18 +24,16 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final JwtAuthFilter jwtAuthFilter;
     private final CustomUserDetailsService userDetailsService;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-    //                        .requestMatchers("/api/register","/api/login", "/api/projects/all").permitAll()
-    //                        .requestMatchers("/api/**").permitAll()
-                                .anyRequest().permitAll()
+                        //                        .requestMatchers("/api/register","/api/login", "/api/projects/all").permitAll()
+                        //                        .requestMatchers("/api/**").permitAll()
+                        .anyRequest().permitAll()
                 )
                 .sessionManagement(manager -> manager
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
