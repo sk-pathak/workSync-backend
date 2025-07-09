@@ -64,20 +64,25 @@ public class User implements UserDetails {
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
+    @Builder.Default
     private List<Project> ownedProjects = new ArrayList<>();
 
     @ManyToMany(mappedBy = "members", fetch = FetchType.LAZY)
     @JsonIgnore
+    @Builder.Default
     private Set<Project> projects = new HashSet<>();
 
     @ManyToMany(mappedBy = "starredByUsers", fetch = FetchType.LAZY)
     @JsonIgnore
+    @Builder.Default
     private Set<Project> starredProjects = new HashSet<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Notification> notifications = new ArrayList<>();
 
     @OneToMany(mappedBy = "assignedTo")
+    @Builder.Default
     private List<Task> assignedTasks = new ArrayList<>();
 
     @PrePersist

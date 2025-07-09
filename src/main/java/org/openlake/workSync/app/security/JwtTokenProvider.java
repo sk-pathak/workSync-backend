@@ -17,10 +17,10 @@ import java.util.UUID;
 @Component
 public class JwtTokenProvider {
 
-    @Value("${app.jwtSecret:workSyncSecretKey}")
+    @Value("${jwt.secretKey}")
     private String jwtSecret;
 
-    @Value("${app.jwtExpirationMs:86400000}") // 1 day
+    @Value("${jwt.expiration:86400000}") // 1 day
     private int jwtExpirationMs;
 
     private SecretKey key;

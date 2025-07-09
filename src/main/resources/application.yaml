@@ -32,3 +32,4 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 jwt:
   secretKey: ${JWT_SECRET}
+  expiration: 86400000
