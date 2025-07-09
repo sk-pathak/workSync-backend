@@ -97,12 +97,15 @@ public class ProjectService {
     }
 
     public PagedResponse<?> listMembers(UUID projectId, Pageable pageable) {
-        Project project = projectRepo.findById(projectId).orElseThrow(() -> new RuntimeException("Project not found"));
-        // For demo, just page the list in-memory (for large teams, use a query)
-        List<User> members = project.getMembers().stream().toList();
+        List<ProjectMember> projectMembers = projectMemberRepo.findByProjectId(projectId);
+        List<User> members = projectMembers.stream()
+                .filter(pm -> "MEMBER".equals(pm.getProjectRole()))
+                .map(ProjectMember::getUser)
+                .toList();
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), members.size());
-        Page<User> page = new org.springframework.data.domain.PageImpl<>(members.subList(start, end), pageable, members.size());
+        List<User> pagedMembers = (start < end) ? members.subList(start, end) : List.of();
+        Page<User> page = new org.springframework.data.domain.PageImpl<>(pagedMembers, pageable, members.size());
         return new PagedResponse<>(page.map(userMapper::toResponseDTO));
     }
 
