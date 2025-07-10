@@ -60,6 +60,7 @@ public class User implements UserDetails {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Column(nullable = false, updatable = false)
     private Instant updatedAt;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -88,6 +89,7 @@ public class User implements UserDetails {
     @PrePersist
     protected void onCreate() {
         this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
     }
 
     @PreUpdate

@@ -31,21 +31,22 @@ public class Project {
     @Column(name = "name", nullable = false, length = 255)
     private String name;
 
-    @NotNull(message = "Project description cannot be null")
-    @Column(name = "description", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     @Column(name = "status", nullable = false)
     private ProjectStatus status = ProjectStatus.PLANNED;
 
     @Column(name = "is_public", nullable = false)
+    @Builder.Default
     private boolean isPublic = false;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false, updatable = false)
     private Instant updatedAt;
 
 
@@ -60,6 +61,7 @@ public class Project {
             joinColumns = @JoinColumn(name = "project_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
+    @Builder.Default
     @JsonIgnore
     private Set<User> members = new HashSet<>();
 
@@ -70,12 +72,15 @@ public class Project {
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     @JsonIgnore
+    @Builder.Default
     private Set<User> starredByUsers = new HashSet<>();
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Task> tasks = new ArrayList<>();
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<Notification> notifications = new ArrayList<>();
 
     @OneToOne(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -84,6 +89,7 @@ public class Project {
     @PrePersist
     protected void onCreate() {
         this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
     }
 
     @PreUpdate

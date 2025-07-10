@@ -30,9 +30,6 @@ public class ProjectMember {
     @JsonIgnore
     private User user;
 
-    @Column(name = "project_role", length = 50)
-    private String projectRole;
-
     @Column(name = "joined_at", nullable = false, updatable = false)
     private Instant joinedAt;
 

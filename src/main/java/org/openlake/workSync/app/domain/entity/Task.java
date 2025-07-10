@@ -52,6 +52,7 @@ public class Task {
     private String description;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     @Column(name = "status", nullable = false, length = 50)
     private TaskStatus status = TaskStatus.TODO;
 
@@ -66,12 +67,13 @@ public class Task {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false,  updatable = false)
     private Instant updatedAt;
 
     @PrePersist
     protected void onCreate() {
         this.createdAt = Instant.now();
+        this.updatedAt = this.createdAt;
     }
 
     @PreUpdate

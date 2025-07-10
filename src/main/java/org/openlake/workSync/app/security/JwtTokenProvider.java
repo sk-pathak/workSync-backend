@@ -27,26 +27,38 @@ public class JwtTokenProvider {
 
     @PostConstruct
     public void init() {
-        byte[] decodedKey = Base64.getDecoder().decode(jwtSecret.getBytes(StandardCharsets.UTF_8));
-        this.key = new SecretKeySpec(decodedKey, "HmacSHA256");
+        try {
+            byte[] decodedKey = Base64.getDecoder().decode(jwtSecret.getBytes(StandardCharsets.UTF_8));
+            this.key = new SecretKeySpec(decodedKey, "HmacSHA256");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize JWT key", e);
+        }
     }
 
     public String generateToken(Authentication authentication) {
-        User userPrincipal = (User) authentication.getPrincipal();
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
-        return Jwts.builder()
-                .subject(userPrincipal.getId().toString())
-                .claim("role", userPrincipal.getRole().name())
-                .issuedAt(now)
-                .expiration(expiryDate)
-                .signWith(key)
-                .compact();
+        try {
+            User userPrincipal = (User) authentication.getPrincipal();
+            Date now = new Date();
+            Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
+            return Jwts.builder()
+                    .subject(userPrincipal.getId().toString())
+                    .claim("role", userPrincipal.getRole().name())
+                    .issuedAt(now)
+                    .expiration(expiryDate)
+                    .signWith(key)
+                    .compact();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate JWT token", e);
+        }
     }
 
     public UUID getUserIdFromJWT(String token) {
-        Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
-        return UUID.fromString(claims.getSubject());
+        try {
+            Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
+            return UUID.fromString(claims.getSubject());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to extract user ID from JWT token", e);
+        }
     }
 
     public boolean validateToken(String authToken) {
