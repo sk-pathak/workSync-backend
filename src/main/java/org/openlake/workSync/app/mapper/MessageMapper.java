@@ -9,6 +9,9 @@ import org.openlake.workSync.app.dto.MessageResponseDTO;
 public interface MessageMapper {
     @Mapping(target = "chatId", source = "chat.id")
     @Mapping(target = "senderId", source = "sender.id")
+    @Mapping(target = "senderUsername", source = "sender.username")
+    @Mapping(target = "senderName", source = "sender.name")
+    @Mapping(target = "senderAvatarUrl", source = "sender.avatarUrl")
     MessageResponseDTO toResponse(Message entity);
 
     default MessageResponseDTO toResponseDTO(Message entity) {
