@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.openlake.workSync.app.dto.PagedResponse;
 import org.springframework.stereotype.Service;
+import org.openlake.workSync.app.domain.enumeration.TaskStatus;
 
 import java.util.UUID;
 
@@ -37,6 +38,12 @@ public class TaskService {
         Task task = taskMapper.toEntity(request);
         task.setProject(project);
         task.setCreator(creator);
+        
+        if (request.getAssigneeId() != null) {
+            User assignee = userRepo.findById(request.getAssigneeId()).orElseThrow(() -> new RuntimeException("Assignee not found"));
+            task.setAssignedTo(assignee);
+        }
+        
         taskRepo.save(task);
         return taskMapper.toResponse(task);
     }
@@ -44,6 +51,14 @@ public class TaskService {
     public TaskResponseDTO updateTask(UUID projectId, UUID taskId, TaskRequestDTO request) {
         Task task = taskRepo.findByIdAndProjectId(taskId, projectId).orElseThrow(() -> new RuntimeException("Task not found"));
         taskMapper.updateEntityFromDTO(request, task);
+        
+        if (request.getAssigneeId() != null) {
+            User assignee = userRepo.findById(request.getAssigneeId()).orElseThrow(() -> new RuntimeException("Assignee not found"));
+            task.setAssignedTo(assignee);
+        } else if (request.getAssigneeId() == null && task.getAssignedTo() != null) {
+            task.setAssignedTo(null);
+        }
+        
         taskRepo.save(task);
         return taskMapper.toResponse(task);
     }
@@ -58,7 +73,6 @@ public class TaskService {
         User user = userRepo.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         task.setAssignedTo(user);
         taskRepo.save(task);
-        // Notify user
         Project project = task.getProject();
         User sender = task.getCreator();
         notificationService.notifyTaskAssigned(user, sender, project, task);
@@ -67,8 +81,13 @@ public class TaskService {
 
     public TaskResponseDTO updateTaskStatus(UUID projectId, UUID taskId, String status) {
         Task task = taskRepo.findByIdAndProjectId(taskId, projectId).orElseThrow(() -> new RuntimeException("Task not found"));
-        task.setStatus(org.openlake.workSync.app.domain.enumeration.TaskStatus.valueOf(status.toUpperCase()));
-        taskRepo.save(task);
-        return taskMapper.toResponse(task);
+        try {
+            TaskStatus taskStatus = TaskStatus.valueOf(status.toUpperCase());
+            task.setStatus(taskStatus);
+            taskRepo.save(task);
+            return taskMapper.toResponse(task);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid task status: " + status);
+        }
     }
 }

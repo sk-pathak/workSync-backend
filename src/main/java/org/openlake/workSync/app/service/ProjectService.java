@@ -17,6 +17,8 @@ import org.openlake.workSync.app.domain.entity.ProjectMember;
 import org.openlake.workSync.app.domain.entity.ProjectMemberId;
 import org.openlake.workSync.app.repo.ProjectStarRepo;
 import org.openlake.workSync.app.repo.ProjectMemberRepo;
+import org.openlake.workSync.app.domain.entity.Chat;
+import org.openlake.workSync.app.repo.ChatRepo;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
@@ -37,6 +39,7 @@ public class ProjectService {
     private final ProjectStarRepo projectStarRepo;
     private final ProjectMemberRepo projectMemberRepo;
     private final NotificationService notificationService;
+    private final ChatRepo chatRepo;
 
     public PagedResponse<ProjectResponseDTO> listProjects(Pageable pageable) {
         Page<Project> page = projectRepo.findAll(pageable);
@@ -51,7 +54,13 @@ public class ProjectService {
         User owner = userRepo.findById(ownerId).orElseThrow(() -> new RuntimeException("User not found"));
         Project project = projectMapper.toEntity(request);
         project.setOwner(owner);
+        Chat chat = Chat.builder()
+            .project(project)
+            .name(project.getName() + " Chat")
+            .build();
+        project.setChat(chat);
         projectRepo.save(project);
+        chatRepo.save(chat);
         return projectMapper.toResponseDTO(project);
     }
 
@@ -88,9 +97,8 @@ public class ProjectService {
         if (!projectMemberRepo.existsById(id)) {
             Project project = projectRepo.findById(projectId).orElseThrow(() -> new RuntimeException("Project not found"));
             User user = userRepo.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-            ProjectMember member = ProjectMember.builder().id(id).project(project).user(user).projectRole("PENDING").build();
+            ProjectMember member = ProjectMember.builder().id(id).project(project).user(user).build();
             projectMemberRepo.save(member);
-            // Notify project owner
             notificationService.notifyJoinRequest(project.getOwner(), user, project);
         }
     }
@@ -98,25 +106,28 @@ public class ProjectService {
     public PagedResponse<?> listMembers(UUID projectId, Pageable pageable) {
         List<ProjectMember> projectMembers = projectMemberRepo.findByProjectId(projectId);
         List<User> members = projectMembers.stream()
-                .filter(pm -> "MEMBER".equals(pm.getProjectRole()))
                 .map(ProjectMember::getUser)
                 .toList();
+        
+        int totalSize = members.size();
         int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), members.size());
-        List<User> pagedMembers = (start < end) ? members.subList(start, end) : List.of();
-        Page<User> page = new org.springframework.data.domain.PageImpl<>(pagedMembers, pageable, members.size());
+        int end = Math.min((start + pageable.getPageSize()), totalSize);
+        
+        List<User> pagedMembers;
+        if (start < totalSize && start < end) {
+            pagedMembers = members.subList(start, end);
+        } else {
+            pagedMembers = List.of();
+        }
+        
+        Page<User> page = new org.springframework.data.domain.PageImpl<>(pagedMembers, pageable, totalSize);
         return new PagedResponse<>(page.map(userMapper::toResponseDTO));
     }
 
     public void approveMember(UUID projectId, UUID userId) {
-        ProjectMemberId id = new ProjectMemberId(projectId, userId);
-        ProjectMember member = projectMemberRepo.findById(id).orElseThrow(() -> new RuntimeException("Join request not found"));
-        member.setProjectRole("MEMBER");
-        projectMemberRepo.save(member);
-        // Notify user
-        Project project = member.getProject();
-        User owner = project.getOwner();
-        notificationService.notifyJoinApproval(member.getUser(), owner, project);
+        Project project = projectRepo.findById(projectId).orElseThrow(() -> new RuntimeException("Project not found"));
+        User user = userRepo.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        notificationService.notifyJoinApproval(user, project.getOwner(), project);
     }
 
     public void removeMember(UUID projectId, UUID userId) {
@@ -129,13 +140,22 @@ public class ProjectService {
     public PagedResponse<?> listTasks(UUID projectId, Pageable pageable) {
         Project project = projectRepo.findById(projectId).orElseThrow(() -> new RuntimeException("Project not found"));
         List<Task> tasks = project.getTasks();
+        
+        int totalSize = tasks.size();
         int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), tasks.size());
-        Page<Task> page = new org.springframework.data.domain.PageImpl<>(tasks.subList(start, end), pageable, tasks.size());
+        int end = Math.min((start + pageable.getPageSize()), totalSize);
+        
+        List<Task> pagedTasks;
+        if (start < totalSize && start < end) {
+            pagedTasks = tasks.subList(start, end);
+        } else {
+            pagedTasks = List.of();
+        }
+        
+        Page<Task> page = new org.springframework.data.domain.PageImpl<>(pagedTasks, pageable, totalSize);
         return new PagedResponse<>(page.map(taskMapper::toResponseDTO));
     }
 
-    // RBAC helpers for @PreAuthorize
     public boolean isOwnerOrAdmin(UUID projectId, UserDetails principal) {
         Project project = projectRepo.findById(projectId).orElse(null);
         if (project == null) return false;
