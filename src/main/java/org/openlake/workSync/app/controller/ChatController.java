@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.openlake.workSync.app.dto.PagedResponse;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.util.UUID;
 
@@ -20,10 +21,16 @@ import java.util.UUID;
 public class ChatController {
     private final ChatService chatService;
     private final MessageRepo messageRepo;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/chat.send/{chatId}")
     public void sendMessage(@AuthenticationPrincipal org.openlake.workSync.app.domain.entity.User user, @Payload MessageRequestDTO message, @PathVariable UUID chatId) {
-        chatService.sendMessage(chatId, message, user.getId());
+        try {
+            chatService.sendMessage(chatId, message, user.getId());
+        } catch (Exception ex) {
+            String errorTopic = "/user/queue/errors";
+            messagingTemplate.convertAndSendToUser(user.getUsername(), errorTopic, ex.getMessage());
+        }
     }
 
     @GetMapping("/api/chats/{chatId}/messages")

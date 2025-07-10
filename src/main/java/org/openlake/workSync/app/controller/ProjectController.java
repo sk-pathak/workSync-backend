@@ -93,12 +93,6 @@ public class ProjectController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/{id}/tasks")
-    @PreAuthorize("@projectService.isMemberOrOwnerOrAdmin(#id, principal)")
-    public ResponseEntity<PagedResponse<?>> listTasks(@PathVariable UUID id, @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(projectService.listTasks(id, pageable));
-    }
-
     @GetMapping("/{id}/github-analytics")
     public ResponseEntity<GithubAnalyticsDTO> getGithubAnalytics(@PathVariable UUID id, @RequestParam String repoUrl) {
         return ResponseEntity.ok(githubAnalyticsService.fetchAnalytics(repoUrl));
