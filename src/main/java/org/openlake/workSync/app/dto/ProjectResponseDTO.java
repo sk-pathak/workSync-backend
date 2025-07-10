@@ -17,4 +17,5 @@ public class ProjectResponseDTO {
     private UUID ownerId;
     private Instant createdAt;
     private Instant updatedAt;
+    private UUID chatId;
 }
