@@ -164,7 +164,7 @@
 				<artifactId>flyway-maven-plugin</artifactId>
 				<version>11.10.0</version>
 				<configuration>
-					<url>jdbc:postgresql://localhost:5432/worksync</url>
+					<url>jdbc:postgresql://db:5432/worksync</url>
 					<user>postgres</user>
 					<locations>
 						<location>filesystem:src/main/resources/db/migration</location>
