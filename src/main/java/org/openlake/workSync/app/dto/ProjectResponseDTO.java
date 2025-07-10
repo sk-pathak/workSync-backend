@@ -15,6 +15,7 @@ public class ProjectResponseDTO {
     private String status;
     private boolean isPublic;
     private UUID ownerId;
+    private UserResponseDTO owner;
     private Instant createdAt;
     private Instant updatedAt;
     private UUID chatId;

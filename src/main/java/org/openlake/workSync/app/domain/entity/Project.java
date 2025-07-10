@@ -36,7 +36,7 @@ public class Project {
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", nullable = false, length = 20)
     private ProjectStatus status = ProjectStatus.PLANNED;
 
     @Column(name = "is_public", nullable = false)

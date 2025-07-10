@@ -42,13 +42,13 @@ public class Notification {
 
     @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false, length = 50)
+    @Column(name = "type", nullable = false, columnDefinition = "notification_type")
     private NotificationType type;
 
     @NotNull
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    @Column(name = "status", nullable = false, length = 50)
+    @Column(name = "status", nullable = false, columnDefinition = "notification_status")
     private NotificationStatus status = NotificationStatus.PENDING;
 
     @Column(columnDefinition = "JSONB")

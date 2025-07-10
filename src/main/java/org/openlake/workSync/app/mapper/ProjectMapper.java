@@ -6,7 +6,7 @@ import org.openlake.workSync.app.dto.ProjectRequestDTO;
 import org.openlake.workSync.app.dto.ProjectResponseDTO;
 import org.openlake.workSync.app.domain.enumeration.ProjectStatus;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {UserMapper.class})
 public interface ProjectMapper {
 
     @Mapping(target = "id", ignore = true)
@@ -19,9 +19,11 @@ public interface ProjectMapper {
     @Mapping(target = "tasks", ignore = true)
     @Mapping(target = "notifications", ignore = true)
     @Mapping(target = "chat", ignore = true)
+    @Mapping(target = "isPublic", expression = "java(dto.isPublic())")
     Project toEntity(ProjectRequestDTO dto);
 
     @Mapping(target = "ownerId", source = "owner.id")
+    @Mapping(target = "owner", source = "owner")
     @Mapping(target = "status", source = "status")
     @Mapping(target = "chatId", source = "chat.id")
     ProjectResponseDTO toResponse(Project entity);

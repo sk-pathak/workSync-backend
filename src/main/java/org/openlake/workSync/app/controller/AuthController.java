@@ -2,6 +2,7 @@ package org.openlake.workSync.app.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.openlake.workSync.app.dto.AuthResponseDTO;
+import org.openlake.workSync.app.dto.LoginRequestDTO;
 import org.openlake.workSync.app.dto.UserRequestDTO;
 import org.openlake.workSync.app.service.AuthService;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +21,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDTO> login(@RequestParam String username, @RequestParam String password) {
-        return ResponseEntity.ok(authService.login(username, password));
+    public ResponseEntity<AuthResponseDTO> login(@RequestBody LoginRequestDTO request) {
+        return ResponseEntity.ok(authService.login(request.getUsername(), request.getPassword()));
     }
 
     @GetMapping("/admin-only")

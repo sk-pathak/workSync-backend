@@ -53,7 +53,7 @@ public class Task {
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    @Column(name = "status", nullable = false, length = 50)
+    @Column(name = "status", nullable = false, columnDefinition = "task_status")
     private TaskStatus status = TaskStatus.TODO;
 
     /** Optional due date for the task */

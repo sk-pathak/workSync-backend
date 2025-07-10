@@ -1,8 +1,10 @@
 package org.openlake.workSync.app.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.openlake.workSync.app.domain.enumeration.ProjectStatus;
 
 @Data
 @NoArgsConstructor
@@ -15,5 +17,7 @@ public class ProjectRequestDTO {
     @NotBlank
     private String description;
 
-    private boolean isPublic;
+    @Builder.Default
+    @NotNull
+    private boolean isPublic = false;
 }
