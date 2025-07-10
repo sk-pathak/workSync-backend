@@ -1,0 +1,9 @@
+ALTER TABLE projects 
+ALTER COLUMN status TYPE VARCHAR(20) USING status::text;
+
+ALTER TABLE projects 
+ALTER COLUMN status SET DEFAULT 'PLANNED';
+
+ALTER TABLE projects 
+ADD CONSTRAINT check_project_status 
+CHECK (status IN ('PLANNED', 'ACTIVE', 'COMPLETED', 'ON_HOLD', 'CANCELLED'));

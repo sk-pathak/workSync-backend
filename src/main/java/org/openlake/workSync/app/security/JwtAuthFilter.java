@@ -28,14 +28,24 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(@Nonnull HttpServletRequest request, @Nonnull HttpServletResponse response, @Nonnull FilterChain filterChain)
             throws ServletException, IOException {
+        String requestURI = request.getRequestURI();
+        if (requestURI.startsWith("/api/auth/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String jwt = getJwtFromRequest(request);
         if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-            UUID userId = tokenProvider.getUserIdFromJWT(jwt);
-            UserDetails userDetails = userService.loadUserById(userId);
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    userDetails, null, userDetails.getAuthorities());
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            try {
+                UUID userId = tokenProvider.getUserIdFromJWT(jwt);
+                UserDetails userDetails = userService.loadUserById(userId);
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            } catch (Exception e) {
+                System.err.println("JWT authentication failed: " + e.getMessage());
+            }
         }
         filterChain.doFilter(request, response);
     }

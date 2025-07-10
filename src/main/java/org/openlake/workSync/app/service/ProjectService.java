@@ -42,12 +42,12 @@ public class ProjectService {
     private final ChatRepo chatRepo;
 
     public PagedResponse<ProjectResponseDTO> listProjects(Pageable pageable) {
-        Page<Project> page = projectRepo.findAll(pageable);
+        Page<Project> page = projectRepo.findAllWithOwner(pageable);
         return new PagedResponse<>(page.map(projectMapper::toResponseDTO));
     }
 
     public ProjectResponseDTO getProjectById(UUID id) {
-        return projectRepo.findById(id).map(projectMapper::toResponseDTO).orElseThrow(() -> new RuntimeException("Project not found"));
+        return projectRepo.findByIdWithOwner(id).map(projectMapper::toResponseDTO).orElseThrow(() -> new RuntimeException("Project not found"));
     }
 
     public ProjectResponseDTO createProject(UUID ownerId, ProjectRequestDTO request) {

@@ -12,12 +12,18 @@ import java.util.UUID;
 
 @Repository
 public interface ProjectRepo extends JpaRepository<Project, UUID> {
-    @Query("SELECT p FROM Project p WHERE p.owner.id = :ownerId")
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.owner WHERE p.owner.id = :ownerId")
     Page<Project> findByOwnerId(@Param("ownerId") UUID ownerId, Pageable pageable);
 
-    @Query("SELECT p FROM Project p JOIN p.members m WHERE m.id = :userId")
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.owner JOIN p.members m WHERE m.id = :userId")
     Page<Project> findByMemberId(@Param("userId") UUID userId, Pageable pageable);
 
-    @Query("SELECT p FROM Project p JOIN p.starredByUsers s WHERE s.id = :userId")
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.owner JOIN p.starredByUsers s WHERE s.id = :userId")
     Page<Project> findByStarredUserId(@Param("userId") UUID userId, Pageable pageable);
+
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.owner")
+    Page<Project> findAllWithOwner(Pageable pageable);
+
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.owner WHERE p.id = :id")
+    java.util.Optional<Project> findByIdWithOwner(@Param("id") UUID id);
 }

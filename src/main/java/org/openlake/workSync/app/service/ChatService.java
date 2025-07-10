@@ -27,8 +27,10 @@ public class ChatService {
     private final MessageRepo messageRepo;
 
     public void sendMessage(UUID chatId, MessageRequestDTO request, UUID senderId) {
-        var chat = chatRepo.findById(chatId).orElseThrow(() -> new RuntimeException("Chat not found"));
-        var sender = userRepo.findById(senderId).orElseThrow(() -> new RuntimeException("User not found"));
+        var chat = chatRepo.findById(chatId).orElseThrow(() -> 
+            new RuntimeException("Chat not found with ID: " + chatId));
+        var sender = userRepo.findById(senderId).orElseThrow(() -> 
+            new RuntimeException("User not found with ID: " + senderId));
         var message = messageMapper.toEntity(request);
         message.setChat(chat);
         message.setSender(sender);
