@@ -36,11 +36,22 @@ public interface UserMapper {
             @Mapping(target = "projects", ignore = true),
             @Mapping(target = "starredProjects", ignore = true),
             @Mapping(target = "notifications", ignore = true),
-            @Mapping(target = "assignedTasks", ignore = true)
+            @Mapping(target = "assignedTasks", ignore = true),
     })
     User toEntity(UserRequestDTO dto);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "role", ignore = true),
+            @Mapping(target = "createdAt", ignore = true),
+            @Mapping(target = "updatedAt", ignore = true),
+            @Mapping(target = "ownedProjects", ignore = true),
+            @Mapping(target = "projects", ignore = true),
+            @Mapping(target = "starredProjects", ignore = true),
+            @Mapping(target = "notifications", ignore = true),
+            @Mapping(target = "assignedTasks", ignore = true),
+    })
     void updateUserFromDTO(UserRequestDTO dto, @MappingTarget User user);
 
     @Named("roleToString")

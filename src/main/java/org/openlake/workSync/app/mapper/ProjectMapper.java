@@ -4,12 +4,13 @@ import org.mapstruct.*;
 import org.openlake.workSync.app.domain.entity.Project;
 import org.openlake.workSync.app.dto.ProjectRequestDTO;
 import org.openlake.workSync.app.dto.ProjectResponseDTO;
+import org.openlake.workSync.app.domain.enumeration.ProjectStatus;
 
 @Mapper(componentModel = "spring")
 public interface ProjectMapper {
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "status", ignore = true) // default handled by entity
+    @Mapping(target = "status", expression = "java(org.openlake.workSync.app.domain.enumeration.ProjectStatus.PLANNED)")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "owner", ignore = true)
@@ -22,6 +23,7 @@ public interface ProjectMapper {
 
     @Mapping(target = "ownerId", source = "owner.id")
     @Mapping(target = "status", source = "status")
+    @Mapping(target = "chatId", source = "chat.id")
     ProjectResponseDTO toResponse(Project entity);
 
     default ProjectResponseDTO toResponseDTO(Project entity) {
@@ -38,5 +40,6 @@ public interface ProjectMapper {
     @Mapping(target = "tasks", ignore = true)
     @Mapping(target = "notifications", ignore = true)
     @Mapping(target = "chat", ignore = true)
+    @Mapping(target = "id", ignore = true)
     void updateEntityFromDTO(ProjectRequestDTO dto, @MappingTarget Project entity);
 }

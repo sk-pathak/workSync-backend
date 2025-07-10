@@ -22,6 +22,7 @@ public interface MessageMapper {
     Message toEntity(MessageRequestDTO dto);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "chat", ignore = true)
     @Mapping(target = "sender", ignore = true)
     @Mapping(target = "sentAt", ignore = true)

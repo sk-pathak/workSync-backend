@@ -4,7 +4,7 @@ import org.mapstruct.*;
 import org.openlake.workSync.app.domain.entity.Task;
 import org.openlake.workSync.app.dto.TaskRequestDTO;
 import org.openlake.workSync.app.dto.TaskResponseDTO;
-
+import org.openlake.workSync.app.domain.enumeration.TaskStatus;
 
 @Mapper(componentModel = "spring")
 public interface TaskMapper {
@@ -25,13 +25,15 @@ public interface TaskMapper {
     @Mapping(target = "assignedTo", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    Task toEntity(TaskRequestDTO dto);
+    @Mapping(target = "status", expression = "java(org.openlake.workSync.app.domain.enumeration.TaskStatus.TODO)")
+    void updateEntityFromDTO(TaskRequestDTO dto, @MappingTarget Task entity);
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "project", ignore = true)
     @Mapping(target = "creator", ignore = true)
     @Mapping(target = "assignedTo", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    void updateEntityFromDTO(TaskRequestDTO dto, @MappingTarget Task entity);
+    @Mapping(target = "status", expression = "java(org.openlake.workSync.app.domain.enumeration.TaskStatus.TODO)")
+    Task toEntity(TaskRequestDTO dto);
 }
