@@ -10,7 +10,7 @@ import org.openlake.workSync.app.domain.enumeration.ProjectStatus;
 public interface ProjectMapper {
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "status", expression = "java(org.openlake.workSync.app.domain.enumeration.ProjectStatus.PLANNED)")
+    @Mapping(target = "status", source = "status")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "owner", ignore = true)
@@ -34,9 +34,7 @@ public interface ProjectMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "owner", ignore = true)
-    @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "members", ignore = true)
     @Mapping(target = "starredByUsers", ignore = true)
     @Mapping(target = "tasks", ignore = true)

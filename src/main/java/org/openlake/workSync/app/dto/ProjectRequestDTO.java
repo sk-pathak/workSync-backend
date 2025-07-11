@@ -20,4 +20,8 @@ public class ProjectRequestDTO {
     @Builder.Default
     @NotNull
     private boolean isPublic = false;
+
+    @Builder.Default
+    @NotNull
+    private ProjectStatus status = ProjectStatus.PLANNED;
 }
