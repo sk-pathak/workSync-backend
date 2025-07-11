@@ -25,7 +25,7 @@ public interface TaskMapper {
     @Mapping(target = "assignedTo", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "status", expression = "java(org.openlake.workSync.app.domain.enumeration.TaskStatus.TODO)")
+    @Mapping(target = "status", expression = "java(dto.getStatus() != null ? org.openlake.workSync.app.domain.enumeration.TaskStatus.valueOf(dto.getStatus()) : org.openlake.workSync.app.domain.enumeration.TaskStatus.TODO)")
     void updateEntityFromDTO(TaskRequestDTO dto, @MappingTarget Task entity);
 
     @Mapping(target = "id", ignore = true)
@@ -34,6 +34,6 @@ public interface TaskMapper {
     @Mapping(target = "assignedTo", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "status", expression = "java(org.openlake.workSync.app.domain.enumeration.TaskStatus.TODO)")
+    @Mapping(target = "status", expression = "java(dto.getStatus() != null ? org.openlake.workSync.app.domain.enumeration.TaskStatus.valueOf(dto.getStatus()) : org.openlake.workSync.app.domain.enumeration.TaskStatus.TODO)")
     Task toEntity(TaskRequestDTO dto);
 }

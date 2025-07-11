@@ -53,7 +53,7 @@ public class Task {
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    @Column(name = "status", nullable = false, columnDefinition = "task_status")
+    @Column(name = "status", nullable = false)
     private TaskStatus status = TaskStatus.TODO;
 
     /** Optional due date for the task */
@@ -67,7 +67,7 @@ public class Task {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(name = "updated_at", nullable = false,  updatable = false)
+    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
     @PrePersist

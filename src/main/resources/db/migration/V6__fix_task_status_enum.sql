@@ -1,0 +1,9 @@
+ALTER TABLE tasks 
+ALTER COLUMN status TYPE VARCHAR(20) USING status::text;
+
+ALTER TABLE tasks 
+ALTER COLUMN status SET DEFAULT 'TODO';
+
+ALTER TABLE tasks 
+ADD CONSTRAINT check_task_status 
+CHECK (status IN ('TODO', 'IN_PROGRESS', 'DONE', 'BLOCKED'));

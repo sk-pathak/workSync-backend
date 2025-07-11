@@ -60,7 +60,7 @@ public class User implements UserDetails {
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false)
     private Instant updatedAt;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
