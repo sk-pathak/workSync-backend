@@ -45,7 +45,7 @@ public class ChatService {
     }
 
     public PagedResponse<MessageResponseDTO> getChatHistory(UUID chatId, Pageable pageable) {
-        Page<MessageResponseDTO> page = messageRepo.findByChatId(chatId, pageable).map(messageMapper::toResponse);
+        Page<MessageResponseDTO> page = messageRepo.findByChatIdOrderBySentAtDesc(chatId, pageable).map(messageMapper::toResponse);
         return new PagedResponse<>(page);
     }
 }
