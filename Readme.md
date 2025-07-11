@@ -66,12 +66,14 @@ A scalable, production-grade backend for **workSync** — a project management p
 
 ### Projects
 - `GET /api/projects` — List/search projects
+- `GET /api/projects/filtered` — List projects with filters (status, owned by me, member of, starred)
 - `POST /api/projects` — Create project
 - `PUT /api/projects/{id}` — Update project (owner/admin)
 - `DELETE /api/projects/{id}` — Delete project (owner/admin)
 - `POST /api/projects/{id}/join` — Request to join
 - `POST /api/projects/{id}/star` — Star/save project
 - `POST /api/projects/{id}/unstar` — Unstar project
+- `GET /api/projects/{id}/starred` — Check if current user has starred this project
 - `GET /api/projects/{id}/members` — List members
 - `POST /api/projects/{id}/members/{userId}/approve` — Approve join
 - `DELETE /api/projects/{id}/members/{userId}/remove` — Remove member
