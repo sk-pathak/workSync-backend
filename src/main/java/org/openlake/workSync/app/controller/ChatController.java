@@ -43,12 +43,12 @@ public class ChatController {
             log.debug("User ID: {}", user.getId());
             log.debug("User username: {}", user.getUsername());
             log.debug("Sending message to chat service for user: {} in chat: {}", user.getUsername(), chatId);
+            
             chatService.sendMessage(chatId, message, user.getId());
             log.debug("Message sent successfully");
         } catch (Exception ex) {
             log.error("Error sending message to chat {}: {}", chatId, ex.getMessage(), ex);
             
-            // Only try to send error message if user is authenticated
             if (user != null) {
                 try {
                     String errorTopic = "/user/queue/errors";
@@ -57,7 +57,6 @@ public class ChatController {
                     log.error("Failed to send error message to user: {}", errorEx.getMessage());
                 }
             } else {
-                // Send to general error topic if user is not authenticated
                 try {
                     messagingTemplate.convertAndSend("/topic/errors", "Authentication failed: " + ex.getMessage());
                 } catch (Exception errorEx) {
@@ -72,7 +71,6 @@ public class ChatController {
         return chatService.getChatHistory(chatId, pageable);
     }
 
-    // Debug endpoint to list all chats
     @GetMapping("/api/chats")
     public List<Chat> getAllChats() {
         List<Chat> chats = chatRepo.findAll();
@@ -83,7 +81,6 @@ public class ChatController {
         return chats;
     }
 
-    // Debug endpoint to check if a specific chat exists
     @GetMapping("/api/chats/{chatId}/exists")
     public boolean chatExists(@PathVariable UUID chatId) {
         boolean exists = chatRepo.existsById(chatId);
