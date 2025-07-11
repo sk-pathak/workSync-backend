@@ -19,7 +19,6 @@ public interface ProjectMapper {
     @Mapping(target = "tasks", ignore = true)
     @Mapping(target = "notifications", ignore = true)
     @Mapping(target = "chat", ignore = true)
-    @Mapping(target = "isPublic", expression = "java(dto.isPublic())")
     Project toEntity(ProjectRequestDTO dto);
 
     @Mapping(target = "ownerId", source = "owner.id")

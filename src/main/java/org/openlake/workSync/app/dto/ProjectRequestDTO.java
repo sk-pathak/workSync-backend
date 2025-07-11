@@ -17,9 +17,7 @@ public class ProjectRequestDTO {
     @NotBlank
     private String description;
 
-    @Builder.Default
-    @NotNull
-    private boolean isPublic = false;
+    private Boolean isPublic;
 
     @Builder.Default
     @NotNull

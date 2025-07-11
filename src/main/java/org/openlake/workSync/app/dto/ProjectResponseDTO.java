@@ -1,5 +1,6 @@
 package org.openlake.workSync.app.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import java.time.Instant;
 import java.util.UUID;
@@ -13,6 +14,7 @@ public class ProjectResponseDTO {
     private String name;
     private String description;
     private String status;
+    @JsonProperty("isPublic")
     private boolean isPublic;
     private UUID ownerId;
     private UserResponseDTO owner;
