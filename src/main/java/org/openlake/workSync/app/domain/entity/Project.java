@@ -10,6 +10,8 @@ import org.openlake.workSync.app.domain.enumeration.ProjectStatus;
 
 import java.time.Instant;
 import java.util.*;
+import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
 @Table(name = "projects")
@@ -42,6 +44,13 @@ public class Project {
     @Column(name = "is_public", nullable = false)
     @Builder.Default
     private boolean isPublic = false;
+
+    public boolean getIsPublic() {
+        return isPublic;
+    }
+    public void setIsPublic(boolean isPublic) {
+        this.isPublic = isPublic;
+    }
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

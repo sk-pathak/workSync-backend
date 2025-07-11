@@ -6,9 +6,13 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.openlake.workSync.app.domain.enumeration.NotificationStatus;
 import org.openlake.workSync.app.domain.enumeration.NotificationType;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.UUID;
+import java.util.Map;
+import org.openlake.workSync.app.domain.payload.TaskAssignmentPayload;
 
 @Entity
 @Table(name = "notifications")
@@ -42,17 +46,18 @@ public class Notification {
 
     @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false, columnDefinition = "notification_type")
+    @Column(name = "type", nullable = false, length = 20)
     private NotificationType type;
 
     @NotNull
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    @Column(name = "status", nullable = false, columnDefinition = "notification_status")
+    @Column(name = "status", nullable = false, length = 20)
     private NotificationStatus status = NotificationStatus.PENDING;
 
-    @Column(columnDefinition = "JSONB")
-    private String payload;
+    @Column(columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private TaskAssignmentPayload payload;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

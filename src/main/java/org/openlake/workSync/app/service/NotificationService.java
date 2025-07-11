@@ -6,6 +6,7 @@ import org.openlake.workSync.app.domain.enumeration.NotificationStatus;
 import org.openlake.workSync.app.dto.NotificationResponseDTO;
 import org.openlake.workSync.app.mapper.NotificationMapper;
 import org.openlake.workSync.app.repo.NotificationRepo;
+import org.openlake.workSync.app.domain.exception.ResourceNotFoundException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.openlake.workSync.app.dto.PagedResponse;
@@ -16,8 +17,10 @@ import org.openlake.workSync.app.domain.entity.Task;
 import org.openlake.workSync.app.domain.enumeration.NotificationType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.openlake.workSync.app.domain.payload.TaskAssignmentPayload;
 
 import java.util.UUID;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -32,13 +35,15 @@ public class NotificationService {
     }
 
     public void markAsRead(UUID userId, UUID notificationId) {
-        Notification notification = notificationRepo.findByIdAndRecipientId(notificationId, userId).orElseThrow(() -> new RuntimeException("Notification not found"));
+        Notification notification = notificationRepo.findByIdAndRecipientId(notificationId, userId)
+            .orElseThrow(() -> ResourceNotFoundException.notificationNotFound(notificationId));
         notification.setStatus(NotificationStatus.READ);
         notificationRepo.save(notification);
     }
 
     public void dismiss(UUID userId, UUID notificationId) {
-        Notification notification = notificationRepo.findByIdAndRecipientId(notificationId, userId).orElseThrow(() -> new RuntimeException("Notification not found"));
+        Notification notification = notificationRepo.findByIdAndRecipientId(notificationId, userId)
+            .orElseThrow(() -> ResourceNotFoundException.notificationNotFound(notificationId));
         notification.setStatus(NotificationStatus.DISMISSED);
         notificationRepo.save(notification);
     }
@@ -60,7 +65,7 @@ public class NotificationService {
                 .recipient(recipient)
                 .sender(sender)
                 .project(project)
-                .type(NotificationType.JOIN_REQUEST)
+                .type(NotificationType.JOIN_APPROVED)
                 .status(NotificationStatus.READ)
                 .payload(null)
                 .build();
@@ -68,12 +73,7 @@ public class NotificationService {
     }
 
     public void notifyTaskAssigned(User recipient, User sender, Project project, Task task) {
-        String payload = null;
-        try {
-            payload = objectMapper.writeValueAsString(new TaskAssignmentPayload(task.getId(), task.getTitle()));
-        } catch (JsonProcessingException e) {
-            // ignore, payload will be null
-        }
+        TaskAssignmentPayload payload = new TaskAssignmentPayload(task.getId(), task.getTitle());
         Notification notification = Notification.builder()
                 .recipient(recipient)
                 .sender(sender)
@@ -83,12 +83,5 @@ public class NotificationService {
                 .payload(payload)
                 .build();
         notificationRepo.save(notification);
-    }
-
-    @lombok.Data
-    @lombok.AllArgsConstructor
-    static class TaskAssignmentPayload {
-        private UUID taskId;
-        private String title;
     }
 }

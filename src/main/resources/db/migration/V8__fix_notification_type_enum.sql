@@ -1,0 +1,6 @@
+ALTER TABLE notifications 
+ALTER COLUMN type TYPE VARCHAR(20) USING type::text;
+
+ALTER TABLE notifications 
+ADD CONSTRAINT check_notification_type 
+CHECK (type IN ('JOIN_REQUEST', 'JOIN_APPROVED', 'TASK_ASSIGNED', 'PROJECT_UPDATED')); 
