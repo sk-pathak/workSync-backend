@@ -14,6 +14,8 @@ import org.openlake.workSync.app.dto.PagedResponse;
 import org.openlake.workSync.app.dto.GithubAnalyticsDTO;
 import org.openlake.workSync.app.service.GithubAnalyticsService;
 import org.springframework.cache.CacheManager;
+import org.openlake.workSync.app.dto.ProjectFilterDTO;
+import org.openlake.workSync.app.domain.enumeration.ProjectStatus;
 
 import java.util.UUID;
 import java.util.Map;
@@ -30,6 +32,26 @@ public class ProjectController {
     @GetMapping
     public ResponseEntity<PagedResponse<ProjectResponseDTO>> listProjects(@PageableDefault Pageable pageable) {
         return ResponseEntity.ok(projectService.listProjects(pageable));
+    }
+
+    @GetMapping("/filtered")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<PagedResponse<ProjectResponseDTO>> listProjectsWithFilters(
+        @AuthenticationPrincipal org.openlake.workSync.app.domain.entity.User user,
+        @PageableDefault Pageable pageable,
+        @RequestParam(required = false) ProjectStatus status,
+        @RequestParam(required = false) Boolean ownedByMe,
+        @RequestParam(required = false) Boolean memberOf,
+        @RequestParam(required = false) Boolean starred
+    ) {
+        ProjectFilterDTO filter = ProjectFilterDTO.builder()
+            .status(status)
+            .ownedByMe(ownedByMe)
+            .memberOf(memberOf)
+            .starred(starred)
+            .build();
+        
+        return ResponseEntity.ok(projectService.listProjectsWithFilters(filter, user.getId(), pageable));
     }
 
     @GetMapping("/{id}")
@@ -75,6 +97,32 @@ public class ProjectController {
     public ResponseEntity<Void> joinProject(@AuthenticationPrincipal org.openlake.workSync.app.domain.entity.User user, @PathVariable UUID id) {
         projectService.requestJoinProject(user.getId(), id);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/leave")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Void> leaveProject(@AuthenticationPrincipal org.openlake.workSync.app.domain.entity.User user, @PathVariable UUID id) {
+        projectService.leaveProject(user.getId(), id);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}/starred")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Map<String, Boolean>> checkIfStarred(
+        @AuthenticationPrincipal org.openlake.workSync.app.domain.entity.User user, 
+        @PathVariable UUID id
+    ) {
+        boolean isStarred = projectService.hasUserStarredProject(user.getId(), id);
+        return ResponseEntity.ok(Map.of("starred", isStarred));
+    }
+
+    @GetMapping("/{id}/membership")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Map<String, Object>> checkMembership(
+        @AuthenticationPrincipal org.openlake.workSync.app.domain.entity.User user, 
+        @PathVariable UUID id
+    ) {
+        return ResponseEntity.ok(projectService.getMembershipStatus(id, user.getId()));
     }
 
     @GetMapping("/{id}/members")

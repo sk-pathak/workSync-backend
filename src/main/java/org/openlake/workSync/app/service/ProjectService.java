@@ -27,11 +27,21 @@ import org.springframework.data.domain.Page;
 import org.openlake.workSync.app.dto.PagedResponse;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.Map;
+import org.openlake.workSync.app.domain.exception.ProjectMembershipException;
+import org.openlake.workSync.app.domain.exception.ResourceNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
+import org.openlake.workSync.app.dto.ProjectFilterDTO;
+import org.openlake.workSync.app.domain.enumeration.ProjectStatus;
 
 @Service
+@Transactional
 @RequiredArgsConstructor
 @Slf4j
 public class ProjectService {
@@ -45,17 +55,34 @@ public class ProjectService {
     private final NotificationService notificationService;
     private final ChatRepo chatRepo;
 
+    private static final Logger debugLogger = LoggerFactory.getLogger(ProjectService.class);
+
     public PagedResponse<ProjectResponseDTO> listProjects(Pageable pageable) {
         Page<Project> page = projectRepo.findAllWithOwner(pageable);
         return new PagedResponse<>(page.map(projectMapper::toResponseDTO));
     }
 
+    public PagedResponse<ProjectResponseDTO> listProjectsWithFilters(ProjectFilterDTO filter, UUID userId, Pageable pageable) {
+        Page<Project> page = projectRepo.findWithFilters(
+            filter.getStatus(),
+            filter.getOwnedByMe(),
+            filter.getMemberOf(),
+            filter.getStarred(),
+            userId,
+            pageable
+        );
+        return new PagedResponse<>(page.map(projectMapper::toResponseDTO));
+    }
+
     public ProjectResponseDTO getProjectById(UUID id) {
-        return projectRepo.findByIdWithOwnerAndChat(id).map(projectMapper::toResponseDTO).orElseThrow(() -> new RuntimeException("Project not found"));
+        return projectRepo.findByIdWithOwnerAndChat(id)
+            .map(projectMapper::toResponseDTO)
+            .orElseThrow(() -> ResourceNotFoundException.projectNotFound(id));
     }
 
     public ProjectResponseDTO createProject(UUID ownerId, ProjectRequestDTO request) {
-        User owner = userRepo.findById(ownerId).orElseThrow(() -> new RuntimeException("User not found"));
+        User owner = userRepo.findById(ownerId)
+            .orElseThrow(() -> ResourceNotFoundException.userNotFound(ownerId));
         Project project = projectMapper.toEntity(request);
         project.setOwner(owner);
         Chat chat = Chat.builder()
@@ -70,7 +97,8 @@ public class ProjectService {
 
     public ProjectResponseDTO updateProject(UUID id, ProjectRequestDTO request) {
         log.debug("Updating project {} with request: {}", id, request);
-        Project project = projectRepo.findByIdWithOwnerAndChat(id).orElseThrow(() -> new RuntimeException("Project not found"));
+        Project project = projectRepo.findByIdWithOwnerAndChat(id)
+            .orElseThrow(() -> ResourceNotFoundException.projectNotFound(id));
         log.debug("Current project status before update: {}", project.getStatus());
         projectMapper.updateEntityFromDTO(request, project);
         log.debug("Project status after mapping: {}", project.getStatus());
@@ -83,6 +111,9 @@ public class ProjectService {
     }
 
     public void deleteProject(UUID id) {
+        if (!projectRepo.existsById(id)) {
+            throw ResourceNotFoundException.projectNotFound(id);
+        }
         projectRepo.deleteById(id);
         // Clear cache for this project
         clearProjectCache(id);
@@ -90,47 +121,67 @@ public class ProjectService {
 
     public void starProject(UUID userId, UUID projectId) {
         ProjectStarId id = new ProjectStarId(projectId, userId);
-        if (!projectStarRepo.existsById(id)) {
-            Project project = projectRepo.findById(projectId).orElseThrow(() -> new RuntimeException("Project not found"));
-            User user = userRepo.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-            ProjectStar star = ProjectStar.builder().id(id).project(project).user(user).build();
-            projectStarRepo.save(star);
+        if (projectStarRepo.existsById(id)) {
+            throw new ProjectMembershipException("You have already starred this project");
         }
+        Project project = projectRepo.findById(projectId)
+            .orElseThrow(() -> ResourceNotFoundException.projectNotFound(projectId));
+        User user = userRepo.findById(userId)
+            .orElseThrow(() -> ResourceNotFoundException.userNotFound(userId));
+        ProjectStar star = ProjectStar.builder().id(id).project(project).user(user).build();
+        projectStarRepo.save(star);
     }
 
     public void unstarProject(UUID userId, UUID projectId) {
         ProjectStarId id = new ProjectStarId(projectId, userId);
-        if (projectStarRepo.existsById(id)) {
-            projectStarRepo.deleteById(id);
+        if (!projectStarRepo.existsById(id)) {
+            throw new ProjectMembershipException("You have not starred this project");
         }
+        projectStarRepo.deleteById(id);
     }
 
     public void requestJoinProject(UUID userId, UUID projectId) {
         ProjectMemberId id = new ProjectMemberId(projectId, userId);
-        if (!projectMemberRepo.existsById(id)) {
-            Project project = projectRepo.findById(projectId).orElseThrow(() -> new RuntimeException("Project not found"));
-            User user = userRepo.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-            ProjectMember member = ProjectMember.builder().id(id).project(project).user(user).build();
-            projectMemberRepo.save(member);
-            notificationService.notifyJoinRequest(project.getOwner(), user, project);
-            // Clear cache for this project
-            clearProjectCache(projectId);
+        boolean exists = projectMemberRepo.existsById(id);
+        debugLogger.debug("Checking membership for projectId={}, userId={}: exists={}", projectId, userId, exists);
+        
+        // Check if user is already a member (this now includes owner check)
+        if (isUserMember(projectId, userId)) {
+            throw new ProjectMembershipException("You are already a member of this project");
         }
+        
+        Project project = projectRepo.findById(projectId)
+            .orElseThrow(() -> ResourceNotFoundException.projectNotFound(projectId));
+        User user = userRepo.findById(userId)
+            .orElseThrow(() -> ResourceNotFoundException.userNotFound(userId));
+        ProjectMember member = ProjectMember.builder().id(id).project(project).user(user).build();
+        projectMemberRepo.save(member);
+        notificationService.notifyJoinRequest(project.getOwner(), user, project);
+        // Clear cache for this project
+        clearProjectCache(projectId);
     }
 
     public PagedResponse<?> listMembers(UUID projectId, Pageable pageable) {
+        Project project = projectRepo.findById(projectId)
+            .orElseThrow(() -> ResourceNotFoundException.projectNotFound(projectId));
+        
+        // Get project members from the project_members table
         List<ProjectMember> projectMembers = projectMemberRepo.findByProjectId(projectId);
         List<User> members = projectMembers.stream()
                 .map(ProjectMember::getUser)
                 .toList();
         
-        int totalSize = members.size();
+        // Add the project owner to the members list
+        List<User> allMembers = new ArrayList<>(members);
+        allMembers.add(project.getOwner());
+        
+        int totalSize = allMembers.size();
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), totalSize);
         
         List<User> pagedMembers;
         if (start < totalSize && start < end) {
-            pagedMembers = members.subList(start, end);
+            pagedMembers = allMembers.subList(start, end);
         } else {
             pagedMembers = List.of();
         }
@@ -140,24 +191,54 @@ public class ProjectService {
     }
 
     public void approveMember(UUID projectId, UUID userId) {
-        Project project = projectRepo.findById(projectId).orElseThrow(() -> new RuntimeException("Project not found"));
-        User user = userRepo.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        Project project = projectRepo.findById(projectId)
+            .orElseThrow(() -> ResourceNotFoundException.projectNotFound(projectId));
+        User user = userRepo.findById(userId)
+            .orElseThrow(() -> ResourceNotFoundException.userNotFound(userId));
         notificationService.notifyJoinApproval(user, project.getOwner(), project);
         // Clear cache for this project
         clearProjectCache(projectId);
     }
 
     public void removeMember(UUID projectId, UUID userId) {
-        ProjectMemberId id = new ProjectMemberId(projectId, userId);
-        if (projectMemberRepo.existsById(id)) {
-            projectMemberRepo.deleteById(id);
-            // Clear cache for this project
-            clearProjectCache(projectId);
+        Project project = projectRepo.findById(projectId)
+            .orElseThrow(() -> ResourceNotFoundException.projectNotFound(projectId));
+        
+        // Prevent removing the project owner
+        if (project.getOwner().getId().equals(userId)) {
+            throw new ProjectMembershipException("Cannot remove the project owner. Transfer ownership or delete the project.");
         }
+        
+        ProjectMemberId id = new ProjectMemberId(projectId, userId);
+        if (!projectMemberRepo.existsById(id)) {
+            throw new ProjectMembershipException("User is not a member of this project");
+        }
+        projectMemberRepo.deleteById(id);
+        // Clear cache for this project
+        clearProjectCache(projectId);
+    }
+
+    public void leaveProject(UUID userId, UUID projectId) {
+        Project project = projectRepo.findById(projectId)
+            .orElseThrow(() -> ResourceNotFoundException.projectNotFound(projectId));
+        
+        // Check if user is the owner
+        if (project.getOwner().getId().equals(userId)) {
+            throw new ProjectMembershipException("Project owner cannot leave the project. Transfer ownership or delete the project.");
+        }
+        
+        // Check if user is a member
+        ProjectMemberId id = new ProjectMemberId(projectId, userId);
+        if (!projectMemberRepo.existsById(id)) {
+            throw new ProjectMembershipException("You are not a member of this project");
+        }
+        
+        removeMember(projectId, userId);
     }
 
     public PagedResponse<?> listTasks(UUID projectId, Pageable pageable) {
-        Project project = projectRepo.findById(projectId).orElseThrow(() -> new RuntimeException("Project not found"));
+        Project project = projectRepo.findById(projectId)
+            .orElseThrow(() -> ResourceNotFoundException.projectNotFound(projectId));
         List<Task> tasks = project.getTasks();
         
         int totalSize = tasks.size();
@@ -189,20 +270,61 @@ public class ProjectService {
     @Cacheable(value = "projectAuthorization", key = "#projectId + '_member_' + #principal.username")
     public boolean isMemberOrOwnerOrAdmin(UUID projectId, UserDetails principal) {
         log.debug("Checking member authorization for project {} and user {}", projectId, principal.getUsername());
-        // Check ownership first using efficient query
-        UUID ownerId = projectRepo.findOwnerIdById(projectId).orElse(null);
-        if (ownerId == null) return false;
-        
         User user = (User) principal;
-        if (ownerId.equals(user.getId()) || user.getRole().name().equals("ADMIN")) {
-            log.debug("User {} is owner or admin for project {}", principal.getUsername(), projectId);
+        
+        // Check if user is admin
+        if (user.getRole().name().equals("ADMIN")) {
+            log.debug("User {} is admin for project {}", principal.getUsername(), projectId);
             return true;
         }
         
-        // Check membership using efficient query
-        boolean isMember = projectRepo.isUserMember(projectId, user.getId());
+        // Check if user is a member (this now includes owner check)
+        boolean isMember = isUserMember(projectId, user.getId());
         log.debug("Member authorization result for project {} and user {}: {}", projectId, principal.getUsername(), isMember);
         return isMember;
+    }
+
+    /**
+     * Check if a user has starred a project
+     */
+    public boolean hasUserStarredProject(UUID userId, UUID projectId) {
+        ProjectStarId id = new ProjectStarId(projectId, userId);
+        return projectStarRepo.existsById(id);
+    }
+
+    /**
+     * Check if a user is a member of the project
+     */
+    public boolean isUserMember(UUID projectId, UUID userId) {
+        // Check if user is the owner first
+        if (isOwner(projectId, userId)) {
+            return true;
+        }
+        // Then check if user is in the project_members table
+        return projectRepo.isUserMember(projectId, userId);
+    }
+
+    /**
+     * Check if a user is the owner of the project
+     */
+    public boolean isOwner(UUID projectId, UUID userId) {
+        UUID ownerId = projectRepo.findOwnerIdById(projectId).orElse(null);
+        return ownerId != null && ownerId.equals(userId);
+    }
+
+    /**
+     * Get comprehensive membership status for a user in a project
+     */
+    public Map<String, Object> getMembershipStatus(UUID projectId, UUID userId) {
+        boolean isOwner = isOwner(projectId, userId);
+        boolean isMember = isUserMember(projectId, userId); // This now includes owner check
+        
+        return Map.of(
+            "isMember", isMember,
+            "isOwner", isOwner,
+            "canJoin", !isMember, // Owner can't join since they're already a member
+            "canLeave", isMember && !isOwner // Only non-owners can leave
+        );
     }
 
     @CacheEvict(value = "projectOwner", key = "#projectId")

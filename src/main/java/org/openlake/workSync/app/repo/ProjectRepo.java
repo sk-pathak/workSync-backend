@@ -1,6 +1,7 @@
 package org.openlake.workSync.app.repo;
 
 import org.openlake.workSync.app.domain.entity.Project;
+import org.openlake.workSync.app.domain.enumeration.ProjectStatus;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,4 +39,45 @@ public interface ProjectRepo extends JpaRepository<Project, UUID> {
 
     @Query("SELECT COUNT(pm) > 0 FROM ProjectMember pm WHERE pm.project.id = :projectId AND pm.user.id = :userId")
     boolean isUserMember(@Param("projectId") UUID projectId, @Param("userId") UUID userId);
+
+    // Filter by status
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.owner LEFT JOIN FETCH p.chat WHERE p.status = :status")
+    Page<Project> findByStatus(@Param("status") ProjectStatus status, Pageable pageable);
+
+    // Filter by status and owned by user
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.owner LEFT JOIN FETCH p.chat WHERE p.status = :status AND p.owner.id = :userId")
+    Page<Project> findByStatusAndOwnerId(@Param("status") ProjectStatus status, @Param("userId") UUID userId, Pageable pageable);
+
+    // Filter by status and member
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.owner LEFT JOIN FETCH p.chat WHERE p.status = :status AND EXISTS (SELECT pm FROM ProjectMember pm WHERE pm.project = p AND pm.user.id = :userId)")
+    Page<Project> findByStatusAndMemberId(@Param("status") ProjectStatus status, @Param("userId") UUID userId, Pageable pageable);
+
+    // Filter by status and starred
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.owner LEFT JOIN FETCH p.chat WHERE p.status = :status AND EXISTS (SELECT ps FROM ProjectStar ps WHERE ps.project = p AND ps.user.id = :userId)")
+    Page<Project> findByStatusAndStarredUserId(@Param("status") ProjectStatus status, @Param("userId") UUID userId, Pageable pageable);
+
+    // Filter by owned by user
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.owner LEFT JOIN FETCH p.chat WHERE p.owner.id = :userId")
+    Page<Project> findByOwnerIdWithOwnerAndChat(@Param("userId") UUID userId, Pageable pageable);
+
+    // Filter by member
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.owner LEFT JOIN FETCH p.chat WHERE EXISTS (SELECT pm FROM ProjectMember pm WHERE pm.project = p AND pm.user.id = :userId)")
+    Page<Project> findByMemberIdWithOwnerAndChat(@Param("userId") UUID userId, Pageable pageable);
+
+    // Filter by starred
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.owner LEFT JOIN FETCH p.chat WHERE EXISTS (SELECT ps FROM ProjectStar ps WHERE ps.project = p AND ps.user.id = :userId)")
+    Page<Project> findByStarredUserIdWithOwnerAndChat(@Param("userId") UUID userId, Pageable pageable);
+
+    // Combined filters
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.owner LEFT JOIN FETCH p.chat WHERE " +
+           "(:status IS NULL OR p.status = :status) AND " +
+           "(:ownedByMe IS NULL OR (:ownedByMe = true AND p.owner.id = :userId) OR (:ownedByMe = false AND p.owner.id != :userId)) AND " +
+           "(:memberOf IS NULL OR (:memberOf = true AND (p.owner.id = :userId OR EXISTS (SELECT pm FROM ProjectMember pm WHERE pm.project = p AND pm.user.id = :userId))) OR (:memberOf = false AND p.owner.id != :userId AND NOT EXISTS (SELECT pm FROM ProjectMember pm WHERE pm.project = p AND pm.user.id = :userId))) AND " +
+           "(:starred IS NULL OR (:starred = true AND EXISTS (SELECT ps FROM ProjectStar ps WHERE ps.project = p AND ps.user.id = :userId)) OR (:starred = false AND NOT EXISTS (SELECT ps FROM ProjectStar ps WHERE ps.project = p AND ps.user.id = :userId)))")
+    Page<Project> findWithFilters(@Param("status") ProjectStatus status, 
+                                 @Param("ownedByMe") Boolean ownedByMe, 
+                                 @Param("memberOf") Boolean memberOf, 
+                                 @Param("starred") Boolean starred, 
+                                 @Param("userId") UUID userId, 
+                                 Pageable pageable);
 }
