@@ -10,6 +10,8 @@ import org.openlake.workSync.app.mapper.TaskMapper;
 import org.openlake.workSync.app.repo.TaskRepo;
 import org.openlake.workSync.app.repo.ProjectRepo;
 import org.openlake.workSync.app.repo.UserRepo;
+import org.openlake.workSync.app.domain.exception.ResourceNotFoundException;
+import org.openlake.workSync.app.domain.exception.ValidationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.openlake.workSync.app.dto.PagedResponse;
@@ -33,14 +35,17 @@ public class TaskService {
     }
 
     public TaskResponseDTO createTask(UUID creatorId, UUID projectId, TaskRequestDTO request) {
-        Project project = projectRepo.findById(projectId).orElseThrow(() -> new RuntimeException("Project not found"));
-        User creator = userRepo.findById(creatorId).orElseThrow(() -> new RuntimeException("User not found"));
+        Project project = projectRepo.findById(projectId)
+            .orElseThrow(() -> ResourceNotFoundException.projectNotFound(projectId));
+        User creator = userRepo.findById(creatorId)
+            .orElseThrow(() -> ResourceNotFoundException.userNotFound(creatorId));
         Task task = taskMapper.toEntity(request);
         task.setProject(project);
         task.setCreator(creator);
         
         if (request.getAssigneeId() != null) {
-            User assignee = userRepo.findById(request.getAssigneeId()).orElseThrow(() -> new RuntimeException("Assignee not found"));
+            User assignee = userRepo.findById(request.getAssigneeId())
+                .orElseThrow(() -> ResourceNotFoundException.userNotFound(request.getAssigneeId()));
             task.setAssignedTo(assignee);
         }
         
@@ -49,11 +54,13 @@ public class TaskService {
     }
 
     public TaskResponseDTO updateTask(UUID projectId, UUID taskId, TaskRequestDTO request) {
-        Task task = taskRepo.findByIdAndProjectId(taskId, projectId).orElseThrow(() -> new RuntimeException("Task not found"));
+        Task task = taskRepo.findByIdAndProjectId(taskId, projectId)
+            .orElseThrow(() -> ResourceNotFoundException.taskNotFound(taskId));
         taskMapper.updateEntityFromDTO(request, task);
         
         if (request.getAssigneeId() != null) {
-            User assignee = userRepo.findById(request.getAssigneeId()).orElseThrow(() -> new RuntimeException("Assignee not found"));
+            User assignee = userRepo.findById(request.getAssigneeId())
+                .orElseThrow(() -> ResourceNotFoundException.userNotFound(request.getAssigneeId()));
             task.setAssignedTo(assignee);
         } else if (request.getAssigneeId() == null && task.getAssignedTo() != null) {
             task.setAssignedTo(null);
@@ -64,13 +71,16 @@ public class TaskService {
     }
 
     public void deleteTask(UUID projectId, UUID taskId) {
-        Task task = taskRepo.findByIdAndProjectId(taskId, projectId).orElseThrow(() -> new RuntimeException("Task not found"));
+        Task task = taskRepo.findByIdAndProjectId(taskId, projectId)
+            .orElseThrow(() -> ResourceNotFoundException.taskNotFound(taskId));
         taskRepo.delete(task);
     }
 
     public TaskResponseDTO assignTask(UUID projectId, UUID taskId, UUID userId) {
-        Task task = taskRepo.findByIdAndProjectId(taskId, projectId).orElseThrow(() -> new RuntimeException("Task not found"));
-        User user = userRepo.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        Task task = taskRepo.findByIdAndProjectId(taskId, projectId)
+            .orElseThrow(() -> ResourceNotFoundException.taskNotFound(taskId));
+        User user = userRepo.findById(userId)
+            .orElseThrow(() -> ResourceNotFoundException.userNotFound(userId));
         task.setAssignedTo(user);
         taskRepo.save(task);
         Project project = task.getProject();
@@ -80,14 +90,15 @@ public class TaskService {
     }
 
     public TaskResponseDTO updateTaskStatus(UUID projectId, UUID taskId, String status) {
-        Task task = taskRepo.findByIdAndProjectId(taskId, projectId).orElseThrow(() -> new RuntimeException("Task not found"));
+        Task task = taskRepo.findByIdAndProjectId(taskId, projectId)
+            .orElseThrow(() -> ResourceNotFoundException.taskNotFound(taskId));
         try {
             TaskStatus taskStatus = TaskStatus.valueOf(status.toUpperCase());
             task.setStatus(taskStatus);
             taskRepo.save(task);
             return taskMapper.toResponse(task);
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid task status: " + status);
+            throw ValidationException.invalidTaskStatus(status);
         }
     }
 }

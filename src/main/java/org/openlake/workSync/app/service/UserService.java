@@ -8,6 +8,7 @@ import org.openlake.workSync.app.mapper.UserMapper;
 import org.openlake.workSync.app.mapper.ProjectMapper;
 import org.openlake.workSync.app.repo.UserRepo;
 import org.openlake.workSync.app.repo.ProjectRepo;
+import org.openlake.workSync.app.domain.exception.ResourceNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
@@ -28,11 +29,12 @@ public class UserService {
     public UserResponseDTO getUserById(UUID id) {
         return userRepo.findById(id)
                 .map(userMapper::toResponseDTO)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> ResourceNotFoundException.userNotFound(id));
     }
 
     public User loadUserById(UUID id) {
-        return userRepo.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        return userRepo.findById(id)
+                .orElseThrow(() -> ResourceNotFoundException.userNotFound(id));
     }
 
     public PagedResponse<UserResponseDTO> listUsers(Pageable pageable) {
@@ -41,7 +43,8 @@ public class UserService {
     }
 
     public UserResponseDTO updateUser(UUID id, UserRequestDTO request) {
-        User user = userRepo.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> ResourceNotFoundException.userNotFound(id));
         userMapper.updateUserFromDTO(request, user);
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -51,6 +54,9 @@ public class UserService {
     }
 
     public void deleteUser(UUID id) {
+        if (!userRepo.existsById(id)) {
+            throw ResourceNotFoundException.userNotFound(id);
+        }
         userRepo.deleteById(id);
     }
 

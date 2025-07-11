@@ -1,6 +1,7 @@
 package org.openlake.workSync.app.service;
 
 import org.openlake.workSync.app.dto.GithubAnalyticsDTO;
+import org.openlake.workSync.app.domain.exception.ValidationException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,9 @@ public class GithubAnalyticsService {
     public GithubAnalyticsDTO fetchAnalytics(String repoUrl) {
         // Extract owner/repo from URL
         String[] parts = repoUrl.replace("https://github.com/", "").split("/");
-        if (parts.length < 2) throw new IllegalArgumentException("Invalid GitHub repo URL");
+        if (parts.length < 2) {
+            throw ValidationException.invalidGitHubUrl(repoUrl);
+        }
         String owner = parts[0];
         String repo = parts[1];
         String apiUrl = GITHUB_API + owner + "/" + repo;
@@ -59,10 +62,9 @@ public class GithubAnalyticsService {
                     .watchers(watchers)
                     .pullRequests(pullRequests)
                     .contributors(contributors)
-                    .repoUrl(repoUrl)
                     .build();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to fetch GitHub analytics", e);
+            throw new ValidationException("Failed to fetch GitHub analytics: " + e.getMessage());
         }
     }
 }

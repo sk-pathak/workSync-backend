@@ -21,7 +21,7 @@ public class TaskController {
     private final TaskService taskService;
 
     @GetMapping
-    @PreAuthorize("@projectService.isMemberOrOwnerOrAdmin(#projectId, principal)")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PagedResponse<TaskResponseDTO>> listTasks(@PathVariable UUID projectId, @PageableDefault Pageable pageable) {
         return ResponseEntity.ok(taskService.listTasks(projectId, pageable));
     }

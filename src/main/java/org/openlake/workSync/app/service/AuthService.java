@@ -7,11 +7,12 @@ import org.openlake.workSync.app.dto.AuthResponseDTO;
 import org.openlake.workSync.app.dto.UserRequestDTO;
 import org.openlake.workSync.app.mapper.UserMapper;
 import org.openlake.workSync.app.repo.UserRepo;
+import org.openlake.workSync.app.domain.exception.AuthenticationException;
+import org.openlake.workSync.app.domain.exception.ValidationException;
 import org.openlake.workSync.app.security.JwtTokenProvider;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -26,10 +27,10 @@ public class AuthService {
 
     public AuthResponseDTO register(UserRequestDTO request) {
         if (userRepo.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("Username already taken");
+            throw ValidationException.usernameAlreadyTaken(request.getUsername());
         }
         if (userRepo.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered");
+            throw ValidationException.emailAlreadyRegistered(request.getEmail());
         }
         User user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -57,8 +58,8 @@ public class AuthService {
             response.setUser(userMapper.toResponseDTO(user));
             response.setExpirationTime("86400000");
             return response;
-        } catch (AuthenticationException e) {
-            throw new RuntimeException("Invalid username or password");
+        } catch (org.springframework.security.core.AuthenticationException e) {
+            throw AuthenticationException.invalidCredentials();
         }
     }
 }
