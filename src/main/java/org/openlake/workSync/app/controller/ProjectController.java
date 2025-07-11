@@ -13,8 +13,11 @@ import org.springframework.web.bind.annotation.*;
 import org.openlake.workSync.app.dto.PagedResponse;
 import org.openlake.workSync.app.dto.GithubAnalyticsDTO;
 import org.openlake.workSync.app.service.GithubAnalyticsService;
+import org.springframework.cache.CacheManager;
 
 import java.util.UUID;
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -22,6 +25,7 @@ import java.util.UUID;
 public class ProjectController {
     private final ProjectService projectService;
     private final GithubAnalyticsService githubAnalyticsService;
+    private final CacheManager cacheManager;
 
     @GetMapping
     public ResponseEntity<PagedResponse<ProjectResponseDTO>> listProjects(@PageableDefault Pageable pageable) {
@@ -96,5 +100,24 @@ public class ProjectController {
     @GetMapping("/{id}/github-analytics")
     public ResponseEntity<GithubAnalyticsDTO> getGithubAnalytics(@PathVariable UUID id, @RequestParam String repoUrl) {
         return ResponseEntity.ok(githubAnalyticsService.fetchAnalytics(repoUrl));
+    }
+
+    @GetMapping("/cache-stats")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> getCacheStats() {
+        Map<String, Object> stats = new HashMap<>();
+        
+        var projectOwnerCache = cacheManager.getCache("projectOwner");
+        var projectAuthCache = cacheManager.getCache("projectAuthorization");
+        
+        if (projectOwnerCache != null) {
+            stats.put("projectOwnerCache", "Cache exists");
+        }
+        
+        if (projectAuthCache != null) {
+            stats.put("projectAuthorizationCache", "Cache exists");
+        }
+        
+        return ResponseEntity.ok(stats);
     }
 }

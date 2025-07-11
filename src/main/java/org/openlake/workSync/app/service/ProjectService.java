@@ -1,6 +1,7 @@
 package org.openlake.workSync.app.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.openlake.workSync.app.domain.entity.Project;
 import org.openlake.workSync.app.domain.entity.User;
 import org.openlake.workSync.app.dto.ProjectRequestDTO;
@@ -24,12 +25,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.openlake.workSync.app.dto.PagedResponse;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProjectService {
     private final ProjectRepo projectRepo;
     private final UserRepo userRepo;
@@ -47,7 +51,7 @@ public class ProjectService {
     }
 
     public ProjectResponseDTO getProjectById(UUID id) {
-        return projectRepo.findByIdWithOwner(id).map(projectMapper::toResponseDTO).orElseThrow(() -> new RuntimeException("Project not found"));
+        return projectRepo.findByIdWithOwnerAndChat(id).map(projectMapper::toResponseDTO).orElseThrow(() -> new RuntimeException("Project not found"));
     }
 
     public ProjectResponseDTO createProject(UUID ownerId, ProjectRequestDTO request) {
@@ -65,14 +69,23 @@ public class ProjectService {
     }
 
     public ProjectResponseDTO updateProject(UUID id, ProjectRequestDTO request) {
-        Project project = projectRepo.findById(id).orElseThrow(() -> new RuntimeException("Project not found"));
+        log.debug("Updating project {} with request: {}", id, request);
+        Project project = projectRepo.findByIdWithOwnerAndChat(id).orElseThrow(() -> new RuntimeException("Project not found"));
+        log.debug("Current project status before update: {}", project.getStatus());
         projectMapper.updateEntityFromDTO(request, project);
+        log.debug("Project status after mapping: {}", project.getStatus());
         projectRepo.save(project);
-        return projectMapper.toResponseDTO(project);
+        // Clear cache for this project
+        clearProjectCache(id);
+        ProjectResponseDTO response = projectMapper.toResponseDTO(project);
+        log.debug("Updated project response: {}", response);
+        return response;
     }
 
     public void deleteProject(UUID id) {
         projectRepo.deleteById(id);
+        // Clear cache for this project
+        clearProjectCache(id);
     }
 
     public void starProject(UUID userId, UUID projectId) {
@@ -100,6 +113,8 @@ public class ProjectService {
             ProjectMember member = ProjectMember.builder().id(id).project(project).user(user).build();
             projectMemberRepo.save(member);
             notificationService.notifyJoinRequest(project.getOwner(), user, project);
+            // Clear cache for this project
+            clearProjectCache(projectId);
         }
     }
 
@@ -128,12 +143,16 @@ public class ProjectService {
         Project project = projectRepo.findById(projectId).orElseThrow(() -> new RuntimeException("Project not found"));
         User user = userRepo.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         notificationService.notifyJoinApproval(user, project.getOwner(), project);
+        // Clear cache for this project
+        clearProjectCache(projectId);
     }
 
     public void removeMember(UUID projectId, UUID userId) {
         ProjectMemberId id = new ProjectMemberId(projectId, userId);
         if (projectMemberRepo.existsById(id)) {
             projectMemberRepo.deleteById(id);
+            // Clear cache for this project
+            clearProjectCache(projectId);
         }
     }
 
@@ -156,19 +175,48 @@ public class ProjectService {
         return new PagedResponse<>(page.map(taskMapper::toResponseDTO));
     }
 
+    @Cacheable(value = "projectAuthorization", key = "#projectId + '_' + #principal.username")
     public boolean isOwnerOrAdmin(UUID projectId, UserDetails principal) {
-        Project project = projectRepo.findById(projectId).orElse(null);
-        if (project == null) return false;
+        log.debug("Checking authorization for project {} and user {}", projectId, principal.getUsername());
+        UUID ownerId = projectRepo.findOwnerIdById(projectId).orElse(null);
+        if (ownerId == null) return false;
         User user = (User) principal;
-        return project.getOwner().getId().equals(user.getId()) || user.getRole().name().equals("ADMIN");
+        boolean isAuthorized = ownerId.equals(user.getId()) || user.getRole().name().equals("ADMIN");
+        log.debug("Authorization result for project {} and user {}: {}", projectId, principal.getUsername(), isAuthorized);
+        return isAuthorized;
     }
 
+    @Cacheable(value = "projectAuthorization", key = "#projectId + '_member_' + #principal.username")
     public boolean isMemberOrOwnerOrAdmin(UUID projectId, UserDetails principal) {
-        Project project = projectRepo.findById(projectId).orElse(null);
-        if (project == null) return false;
+        log.debug("Checking member authorization for project {} and user {}", projectId, principal.getUsername());
+        // Check ownership first using efficient query
+        UUID ownerId = projectRepo.findOwnerIdById(projectId).orElse(null);
+        if (ownerId == null) return false;
+        
         User user = (User) principal;
-        return project.getOwner().getId().equals(user.getId()) ||
-                project.getMembers().stream().anyMatch(m -> m.getId().equals(user.getId())) ||
-                user.getRole().name().equals("ADMIN");
+        if (ownerId.equals(user.getId()) || user.getRole().name().equals("ADMIN")) {
+            log.debug("User {} is owner or admin for project {}", principal.getUsername(), projectId);
+            return true;
+        }
+        
+        // Check membership using efficient query
+        boolean isMember = projectRepo.isUserMember(projectId, user.getId());
+        log.debug("Member authorization result for project {} and user {}: {}", projectId, principal.getUsername(), isMember);
+        return isMember;
+    }
+
+    @CacheEvict(value = "projectOwner", key = "#projectId")
+    private void clearProjectOwnerCache(UUID projectId) {
+        // This method is used to clear project owner cache entries
+    }
+
+    @CacheEvict(value = "projectAuthorization", allEntries = true)
+    private void clearProjectAuthorizationCache(UUID projectId) {
+        // This method is used to clear project authorization cache entries
+    }
+
+    private void clearProjectCache(UUID projectId) {
+        clearProjectOwnerCache(projectId);
+        clearProjectAuthorizationCache(projectId);
     }
 }
