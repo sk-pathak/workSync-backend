@@ -2,8 +2,8 @@ FROM eclipse-temurin:17
 
 WORKDIR /app
 
-COPY ./*.jar app.jar
-# COPY .env .env
+COPY target/*.jar app.jar
+COPY .env .env
 
 EXPOSE 8080
 
