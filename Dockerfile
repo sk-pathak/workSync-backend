@@ -3,7 +3,7 @@ FROM eclipse-temurin:17
 WORKDIR /app
 
 COPY target/*.jar app.jar
-COPY .env .env
+# COPY .env .env
 
 EXPOSE 8080
 
