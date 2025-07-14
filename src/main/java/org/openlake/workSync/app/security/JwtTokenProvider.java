@@ -56,6 +56,8 @@ public class JwtTokenProvider {
         try {
             Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
             return UUID.fromString(claims.getSubject());
+        } catch (ExpiredJwtException e) {
+            throw org.openlake.workSync.app.domain.exception.TokenExpiredException.tokenExpired(e);
         } catch (Exception e) {
             throw new RuntimeException("Failed to extract user ID from JWT token", e);
         }
@@ -65,7 +67,20 @@ public class JwtTokenProvider {
         try {
             Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken);
             return true;
+        } catch (ExpiredJwtException ex) {
+            throw org.openlake.workSync.app.domain.exception.TokenExpiredException.tokenExpired(ex);
         } catch (JwtException | IllegalArgumentException ex) {
+            return false;
+        }
+    }
+    
+    public boolean isTokenExpired(String authToken) {
+        try {
+            Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken).getPayload();
+            return claims.getExpiration().before(new Date());
+        } catch (ExpiredJwtException ex) {
+            return true;
+        } catch (Exception ex) {
             return false;
         }
     }
