@@ -12,4 +12,5 @@ public interface UserRepo extends JpaRepository<User, UUID> {
     Optional<User> findByUsername(String username);
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
+    long countByRole(org.openlake.workSync.app.domain.enumeration.Role role);
 }

@@ -26,4 +26,6 @@ public interface TaskRepo extends JpaRepository<Task, UUID> {
     
     @Query("SELECT t FROM Task t LEFT JOIN FETCH t.assignedTo WHERE t.id = :taskId AND t.project.id = :projectId")
     Optional<Task> findByIdAndProjectIdWithAssignee(@Param("taskId") UUID taskId, @Param("projectId") UUID projectId);
+
+    long countByStatus(org.openlake.workSync.app.domain.enumeration.TaskStatus status);
 }

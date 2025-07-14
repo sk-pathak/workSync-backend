@@ -63,4 +63,6 @@ public interface ProjectRepo extends JpaRepository<Project, UUID> {
                                  @Param("starred") Boolean starred, 
                                  @Param("userId") UUID userId, 
                                  Pageable pageable);
+
+    long countByStatus(ProjectStatus status);
 }
