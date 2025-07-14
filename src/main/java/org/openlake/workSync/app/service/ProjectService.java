@@ -18,6 +18,7 @@ import org.openlake.workSync.app.domain.entity.ProjectMember;
 import org.openlake.workSync.app.domain.entity.ProjectMemberId;
 import org.openlake.workSync.app.repo.ProjectStarRepo;
 import org.openlake.workSync.app.repo.ProjectMemberRepo;
+import org.openlake.workSync.app.repo.TaskRepo;
 import org.openlake.workSync.app.domain.entity.Chat;
 import org.openlake.workSync.app.repo.ChatRepo;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -52,6 +53,7 @@ public class ProjectService {
     private final TaskMapper taskMapper;
     private final ProjectStarRepo projectStarRepo;
     private final ProjectMemberRepo projectMemberRepo;
+    private final TaskRepo taskRepo;
     private final NotificationService notificationService;
     private final ChatRepo chatRepo;
 
@@ -59,7 +61,7 @@ public class ProjectService {
 
     public PagedResponse<ProjectResponseDTO> listProjects(Pageable pageable) {
         Page<Project> page = projectRepo.findAllWithOwner(pageable);
-        return new PagedResponse<>(page.map(projectMapper::toResponseDTO));
+        return new PagedResponse<>(page.map(this::enrichProjectWithMemberCount));
     }
 
     public PagedResponse<ProjectResponseDTO> listProjectsWithFilters(ProjectFilterDTO filter, UUID userId, Pageable pageable) {
@@ -71,12 +73,12 @@ public class ProjectService {
             userId,
             pageable
         );
-        return new PagedResponse<>(page.map(projectMapper::toResponseDTO));
+        return new PagedResponse<>(page.map(this::enrichProjectWithMemberCount));
     }
 
     public ProjectResponseDTO getProjectById(UUID id) {
         return projectRepo.findByIdWithOwnerAndChat(id)
-            .map(projectMapper::toResponseDTO)
+            .map(this::enrichProjectWithMemberCount)
             .orElseThrow(() -> ResourceNotFoundException.projectNotFound(id));
     }
 
@@ -92,7 +94,7 @@ public class ProjectService {
         project.setChat(chat);
         projectRepo.save(project);
         chatRepo.save(chat);
-        return projectMapper.toResponseDTO(project);
+        return enrichProjectWithMemberCount(project);
     }
 
     public ProjectResponseDTO updateProject(UUID id, ProjectRequestDTO request) {
@@ -103,9 +105,8 @@ public class ProjectService {
         projectMapper.updateEntityFromDTO(request, project);
         log.debug("Project status after mapping: {}", project.getStatus());
         projectRepo.save(project);
-        // Clear cache for this project
         clearProjectCache(id);
-        ProjectResponseDTO response = projectMapper.toResponseDTO(project);
+        ProjectResponseDTO response = enrichProjectWithMemberCount(project);
         log.debug("Updated project response: {}", response);
         return response;
     }
@@ -115,7 +116,6 @@ public class ProjectService {
             throw ResourceNotFoundException.projectNotFound(id);
         }
         projectRepo.deleteById(id);
-        // Clear cache for this project
         clearProjectCache(id);
     }
 
@@ -145,7 +145,6 @@ public class ProjectService {
         boolean exists = projectMemberRepo.existsById(id);
         debugLogger.debug("Checking membership for projectId={}, userId={}: exists={}", projectId, userId, exists);
         
-        // Check if user is already a member (this now includes owner check)
         if (isUserMember(projectId, userId)) {
             throw new ProjectMembershipException("You are already a member of this project");
         }
@@ -157,7 +156,6 @@ public class ProjectService {
         ProjectMember member = ProjectMember.builder().id(id).project(project).user(user).build();
         projectMemberRepo.save(member);
         notificationService.notifyJoinRequest(project.getOwner(), user, project);
-        // Clear cache for this project
         clearProjectCache(projectId);
     }
 
@@ -165,13 +163,11 @@ public class ProjectService {
         Project project = projectRepo.findById(projectId)
             .orElseThrow(() -> ResourceNotFoundException.projectNotFound(projectId));
         
-        // Get project members from the project_members table
         List<ProjectMember> projectMembers = projectMemberRepo.findByProjectId(projectId);
         List<User> members = projectMembers.stream()
                 .map(ProjectMember::getUser)
                 .toList();
         
-        // Add the project owner to the members list
         List<User> allMembers = new ArrayList<>(members);
         allMembers.add(project.getOwner());
         
@@ -196,7 +192,6 @@ public class ProjectService {
         User user = userRepo.findById(userId)
             .orElseThrow(() -> ResourceNotFoundException.userNotFound(userId));
         notificationService.notifyJoinApproval(user, project.getOwner(), project);
-        // Clear cache for this project
         clearProjectCache(projectId);
     }
 
@@ -204,7 +199,6 @@ public class ProjectService {
         Project project = projectRepo.findById(projectId)
             .orElseThrow(() -> ResourceNotFoundException.projectNotFound(projectId));
         
-        // Prevent removing the project owner
         if (project.getOwner().getId().equals(userId)) {
             throw new ProjectMembershipException("Cannot remove the project owner. Transfer ownership or delete the project.");
         }
@@ -214,7 +208,6 @@ public class ProjectService {
             throw new ProjectMembershipException("User is not a member of this project");
         }
         projectMemberRepo.deleteById(id);
-        // Clear cache for this project
         clearProjectCache(projectId);
     }
 
@@ -222,12 +215,10 @@ public class ProjectService {
         Project project = projectRepo.findById(projectId)
             .orElseThrow(() -> ResourceNotFoundException.projectNotFound(projectId));
         
-        // Check if user is the owner
         if (project.getOwner().getId().equals(userId)) {
             throw new ProjectMembershipException("Project owner cannot leave the project. Transfer ownership or delete the project.");
         }
         
-        // Check if user is a member
         ProjectMemberId id = new ProjectMemberId(projectId, userId);
         if (!projectMemberRepo.existsById(id)) {
             throw new ProjectMembershipException("You are not a member of this project");
@@ -239,7 +230,7 @@ public class ProjectService {
     public PagedResponse<?> listTasks(UUID projectId, Pageable pageable) {
         Project project = projectRepo.findById(projectId)
             .orElseThrow(() -> ResourceNotFoundException.projectNotFound(projectId));
-        List<Task> tasks = project.getTasks();
+        List<Task> tasks = taskRepo.findByProjectIdWithAssignee(projectId);
         
         int totalSize = tasks.size();
         int start = (int) pageable.getOffset();
@@ -272,73 +263,111 @@ public class ProjectService {
         log.debug("Checking member authorization for project {} and user {}", projectId, principal.getUsername());
         User user = (User) principal;
         
-        // Check if user is admin
         if (user.getRole().name().equals("ADMIN")) {
             log.debug("User {} is admin for project {}", principal.getUsername(), projectId);
             return true;
         }
         
-        // Check if user is a member (this now includes owner check)
         boolean isMember = isUserMember(projectId, user.getId());
         log.debug("Member authorization result for project {} and user {}: {}", projectId, principal.getUsername(), isMember);
         return isMember;
     }
 
-    /**
-     * Check if a user has starred a project
-     */
     public boolean hasUserStarredProject(UUID userId, UUID projectId) {
         ProjectStarId id = new ProjectStarId(projectId, userId);
         return projectStarRepo.existsById(id);
     }
 
-    /**
-     * Check if a user is a member of the project
-     */
     public boolean isUserMember(UUID projectId, UUID userId) {
-        // Check if user is the owner first
         if (isOwner(projectId, userId)) {
             return true;
         }
-        // Then check if user is in the project_members table
         return projectRepo.isUserMember(projectId, userId);
     }
 
-    /**
-     * Check if a user is the owner of the project
-     */
     public boolean isOwner(UUID projectId, UUID userId) {
         UUID ownerId = projectRepo.findOwnerIdById(projectId).orElse(null);
         return ownerId != null && ownerId.equals(userId);
     }
 
-    /**
-     * Get comprehensive membership status for a user in a project
-     */
     public Map<String, Object> getMembershipStatus(UUID projectId, UUID userId) {
         boolean isOwner = isOwner(projectId, userId);
-        boolean isMember = isUserMember(projectId, userId); // This now includes owner check
+        boolean isMember = isUserMember(projectId, userId);
         
         return Map.of(
             "isMember", isMember,
             "isOwner", isOwner,
-            "canJoin", !isMember, // Owner can't join since they're already a member
-            "canLeave", isMember && !isOwner // Only non-owners can leave
+            "canJoin", !isMember,
+            "canLeave", isMember && !isOwner
         );
     }
 
     @CacheEvict(value = "projectOwner", key = "#projectId")
     private void clearProjectOwnerCache(UUID projectId) {
-        // This method is used to clear project owner cache entries
     }
 
     @CacheEvict(value = "projectAuthorization", allEntries = true)
     private void clearProjectAuthorizationCache(UUID projectId) {
-        // This method is used to clear project authorization cache entries
     }
 
     private void clearProjectCache(UUID projectId) {
         clearProjectOwnerCache(projectId);
         clearProjectAuthorizationCache(projectId);
+    }
+
+    private ProjectResponseDTO enrichProjectWithMemberCount(Project project) {
+        ProjectResponseDTO dto = projectMapper.toResponseDTO(project);
+        int memberCount = calculateMemberCount(project.getId());
+        dto.setMemberCount(memberCount);
+        
+        Map<String, Object> progressMetrics = calculateProjectProgress(project.getId());
+        dto.setTotalTasks((Integer) progressMetrics.get("totalTasks"));
+        dto.setCompletedTasks((Integer) progressMetrics.get("completedTasks"));
+        dto.setProgressPercentage((Double) progressMetrics.get("progressPercentage"));
+        dto.setTaskStatusBreakdown((Map<String, Integer>) progressMetrics.get("taskStatusBreakdown"));
+        
+        return dto;
+    }
+
+    private int calculateMemberCount(UUID projectId) {
+        List<ProjectMember> projectMembers = projectMemberRepo.findByProjectId(projectId);
+        return 1 + projectMembers.size();
+    }
+
+    private Map<String, Object> calculateProjectProgress(UUID projectId) {
+        List<Task> tasks = taskRepo.findByProjectId(projectId);
+        
+        List<Task> activeTasks = tasks.stream()
+            .filter(task -> task.getStatus() != org.openlake.workSync.app.domain.enumeration.TaskStatus.BLOCKED)
+            .toList();
+        
+        int totalTasks = tasks.size();
+        int activeTaskCount = activeTasks.size();
+        int completedTasks = (int) activeTasks.stream()
+            .filter(task -> task.getStatus() == org.openlake.workSync.app.domain.enumeration.TaskStatus.DONE)
+            .count();
+        
+        double progressPercentage = activeTaskCount > 0 ? (double) completedTasks / activeTaskCount * 100 : 0.0;
+        
+        Map<String, Integer> taskStatusBreakdown = tasks.stream()
+            .collect(java.util.stream.Collectors.groupingBy(
+                task -> task.getStatus().name(),
+                java.util.stream.Collectors.collectingAndThen(
+                    java.util.stream.Collectors.counting(),
+                    Long::intValue
+                )
+            ));
+        
+        for (org.openlake.workSync.app.domain.enumeration.TaskStatus status : 
+             org.openlake.workSync.app.domain.enumeration.TaskStatus.values()) {
+            taskStatusBreakdown.putIfAbsent(status.name(), 0);
+        }
+        
+        return Map.of(
+            "totalTasks", totalTasks,
+            "completedTasks", completedTasks,
+            "progressPercentage", Math.round(progressPercentage * 100.0) / 100.0,
+            "taskStatusBreakdown", taskStatusBreakdown
+        );
     }
 }
