@@ -9,6 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -35,5 +38,13 @@ public class AuthController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> userOnly() {
         return ResponseEntity.ok("You are a user!");
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> logout() {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Successfully logged out");
+        response.put("status", "SUCCESS");
+        return ResponseEntity.ok(response);
     }
 }
