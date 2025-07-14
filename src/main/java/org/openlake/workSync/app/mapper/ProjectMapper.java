@@ -25,6 +25,11 @@ public interface ProjectMapper {
     @Mapping(target = "owner", source = "owner")
     @Mapping(target = "status", source = "status")
     @Mapping(target = "chatId", source = "chat.id")
+    @Mapping(target = "memberCount", ignore = true)
+    @Mapping(target = "totalTasks", ignore = true)
+    @Mapping(target = "completedTasks", ignore = true)
+    @Mapping(target = "progressPercentage", ignore = true)
+    @Mapping(target = "taskStatusBreakdown", ignore = true)
     ProjectResponseDTO toResponse(Project entity);
 
     default ProjectResponseDTO toResponseDTO(Project entity) {

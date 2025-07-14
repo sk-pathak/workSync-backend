@@ -14,6 +14,7 @@ public class TaskResponseDTO {
     private UUID projectId;
     private UUID creatorId;
     private UUID assigneeId;
+    private UserResponseDTO assignee;
     private String title;
     private String description;
     private String status;

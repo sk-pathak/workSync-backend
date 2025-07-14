@@ -16,6 +16,7 @@ public class NotificationResponseDTO {
     private UUID id;
     private UUID recipientId;
     private UUID senderId;
+    private UserResponseDTO sender;
     private UUID projectId;
     private String type;
     private String status;

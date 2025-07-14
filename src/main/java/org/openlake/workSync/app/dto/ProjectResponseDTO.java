@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import java.time.Instant;
 import java.util.UUID;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
@@ -21,4 +22,10 @@ public class ProjectResponseDTO {
     private Instant createdAt;
     private Instant updatedAt;
     private UUID chatId;
+    private Integer memberCount;
+    
+    private Integer totalTasks;
+    private Integer completedTasks;
+    private Double progressPercentage;
+    private Map<String, Integer> taskStatusBreakdown;
 }
