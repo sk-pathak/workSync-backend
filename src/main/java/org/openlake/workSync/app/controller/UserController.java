@@ -27,7 +27,7 @@ public class UserController {
     }
 
     @PutMapping("/me")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<UserResponseDTO> updateCurrentUser(@AuthenticationPrincipal org.openlake.workSync.app.domain.entity.User user, @RequestBody UserRequestDTO request) {
         return ResponseEntity.ok(userService.updateUser(user.getId(), request));
     }
@@ -58,19 +58,19 @@ public class UserController {
     }
 
     @GetMapping("/me/projects/owned")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> getOwnedProjects(@AuthenticationPrincipal org.openlake.workSync.app.domain.entity.User user, @PageableDefault Pageable pageable) {
         return ResponseEntity.ok(userService.getOwnedProjects(user.getId(), pageable));
     }
 
     @GetMapping("/me/projects/joined")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> getJoinedProjects(@AuthenticationPrincipal org.openlake.workSync.app.domain.entity.User user, @PageableDefault Pageable pageable) {
         return ResponseEntity.ok(userService.getJoinedProjects(user.getId(), pageable));
     }
 
     @GetMapping("/me/projects/starred")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> getStarredProjects(@AuthenticationPrincipal org.openlake.workSync.app.domain.entity.User user, @PageableDefault Pageable pageable) {
         return ResponseEntity.ok(userService.getStarredProjects(user.getId(), pageable));
     }

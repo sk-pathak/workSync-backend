@@ -28,18 +28,6 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request.getUsername(), request.getPassword()));
     }
 
-    @GetMapping("/admin-only")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> adminOnly() {
-        return ResponseEntity.ok("You are an admin!");
-    }
-
-    @GetMapping("/user-only")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<String> userOnly() {
-        return ResponseEntity.ok("You are a user!");
-    }
-
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout() {
         Map<String, String> response = new HashMap<>();

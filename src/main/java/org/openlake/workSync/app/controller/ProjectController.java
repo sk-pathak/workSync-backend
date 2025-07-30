@@ -35,7 +35,7 @@ public class ProjectController {
     }
 
     @GetMapping("/filtered")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<PagedResponse<ProjectResponseDTO>> listProjectsWithFilters(
         @AuthenticationPrincipal org.openlake.workSync.app.domain.entity.User user,
         @PageableDefault Pageable pageable,
@@ -60,7 +60,7 @@ public class ProjectController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<ProjectResponseDTO> createProject(@AuthenticationPrincipal org.openlake.workSync.app.domain.entity.User user, @RequestBody ProjectRequestDTO request) {
         return ResponseEntity.ok(projectService.createProject(user.getId(), request));
     }
@@ -79,35 +79,35 @@ public class ProjectController {
     }
 
     @PostMapping("/{id}/star")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Void> starProject(@AuthenticationPrincipal org.openlake.workSync.app.domain.entity.User user, @PathVariable UUID id) {
         projectService.starProject(user.getId(), id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/unstar")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Void> unstarProject(@AuthenticationPrincipal org.openlake.workSync.app.domain.entity.User user, @PathVariable UUID id) {
         projectService.unstarProject(user.getId(), id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/join")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Void> joinProject(@AuthenticationPrincipal org.openlake.workSync.app.domain.entity.User user, @PathVariable UUID id) {
         projectService.requestJoinProject(user.getId(), id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/leave")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Void> leaveProject(@AuthenticationPrincipal org.openlake.workSync.app.domain.entity.User user, @PathVariable UUID id) {
         projectService.leaveProject(user.getId(), id);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{id}/starred")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Map<String, Boolean>> checkIfStarred(
         @AuthenticationPrincipal org.openlake.workSync.app.domain.entity.User user, 
         @PathVariable UUID id
@@ -117,7 +117,7 @@ public class ProjectController {
     }
 
     @GetMapping("/{id}/membership")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<Map<String, Object>> checkMembership(
         @AuthenticationPrincipal org.openlake.workSync.app.domain.entity.User user, 
         @PathVariable UUID id
