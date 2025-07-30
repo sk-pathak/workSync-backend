@@ -1,6 +1,7 @@
 package org.openlake.workSync.app.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.openlake.workSync.app.dto.MessageRequestDTO;
 import org.openlake.workSync.app.dto.MessageResponseDTO;
 import org.openlake.workSync.app.mapper.MessageMapper;
@@ -20,6 +21,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ChatService {
     private final KafkaTemplate<String, MessageResponseDTO> kafkaTemplate;
     private final SimpMessagingTemplate messagingTemplate;
@@ -42,7 +44,12 @@ public class ChatService {
             .sentAt(java.time.Instant.now())
             .build();
         
-        messagingTemplate.convertAndSend("/topic/chat/" + chatId, response);
+        try {
+            kafkaTemplate.send("chat-" + chatId, response);
+        } catch (Exception e) {
+            log.warn("Kafka send failed, falling back to direct WebSocket: {}", e.getMessage());
+            messagingTemplate.convertAndSend("/topic/chat/" + chatId, response);
+        }
         
         saveMessageAsync(chatId, request, senderId);
     }
@@ -58,8 +65,10 @@ public class ChatService {
             message.setChat(chat);
             message.setSender(sender);
             messageRepo.save(message);
+            log.debug("Message saved successfully for chat: {} by user: {}", chatId, senderId);
         } catch (Exception ex) {
-            System.err.println("Failed to save message to database: " + ex.getMessage());
+            log.error("Failed to save message to database for chat: {} by user: {}: {}", 
+                chatId, senderId, ex.getMessage(), ex);
         }
     }
 
