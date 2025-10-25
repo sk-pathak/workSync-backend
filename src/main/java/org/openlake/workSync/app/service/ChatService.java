@@ -2,8 +2,10 @@ package org.openlake.workSync.app.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openlake.workSync.app.dto.ChatEventDTO;
 import org.openlake.workSync.app.dto.MessageRequestDTO;
 import org.openlake.workSync.app.dto.MessageResponseDTO;
+import org.openlake.workSync.app.kafka.ChatEventProducer;
 import org.openlake.workSync.app.mapper.MessageMapper;
 import org.openlake.workSync.app.repo.ChatRepo;
 import org.openlake.workSync.app.repo.MessageRepo;
@@ -15,15 +17,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.openlake.workSync.app.dto.PagedResponse;
-import org.springframework.scheduling.annotation.Async;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ChatService {
-    private final KafkaTemplate<String, MessageResponseDTO> kafkaTemplate;
+    private final ChatEventProducer chatEventProducer;
     private final SimpMessagingTemplate messagingTemplate;
     private final MessageMapper messageMapper;
     private final ChatRepo chatRepo;
@@ -34,6 +36,9 @@ public class ChatService {
         var sender = userRepo.findById(senderId)
             .orElseThrow(() -> ResourceNotFoundException.userNotFound(senderId));
         
+        UUID eventId = UUID.randomUUID();
+        Instant timestamp = Instant.now();
+        
         var response = MessageResponseDTO.builder()
             .chatId(chatId)
             .senderId(senderId)
@@ -41,34 +46,35 @@ public class ChatService {
             .senderName(sender.getName())
             .senderAvatarUrl(sender.getAvatarUrl())
             .content(request.getContent())
-            .sentAt(java.time.Instant.now())
+            .sentAt(timestamp)
             .build();
         
         try {
-            kafkaTemplate.send("chat-" + chatId, response);
-        } catch (Exception e) {
-            log.warn("Kafka send failed, falling back to direct WebSocket: {}", e.getMessage());
             messagingTemplate.convertAndSend("/topic/chat/" + chatId, response);
+            log.debug("Broadcasted message to WebSocket subscribers for chat {}", chatId);
+        } catch (Exception e) {
+            log.error("Failed to broadcast message via WebSocket for chat {}: {}", 
+                chatId, e.getMessage(), e);
         }
-        
-        saveMessageAsync(chatId, request, senderId);
-    }
 
-    @Async
-    public void saveMessageAsync(UUID chatId, MessageRequestDTO request, UUID senderId) {
+        ChatEventDTO event = ChatEventDTO.builder()
+            .eventId(eventId)
+            .eventType(ChatEventDTO.ChatEventType.MESSAGE_SENT)
+            .timestamp(timestamp)
+            .chatId(chatId)
+            .userId(senderId)
+            .username(sender.getUsername())
+            .userDisplayName(sender.getName())
+            .userAvatarUrl(sender.getAvatarUrl())
+            .payload(request.getContent())
+            .build();
+        
         try {
-            var chat = chatRepo.findById(chatId)
-                .orElseThrow(() -> ResourceNotFoundException.chatNotFound(chatId));
-            var sender = userRepo.findById(senderId)
-                .orElseThrow(() -> ResourceNotFoundException.userNotFound(senderId));
-            var message = messageMapper.toEntity(request);
-            message.setChat(chat);
-            message.setSender(sender);
-            messageRepo.save(message);
-            log.debug("Message saved successfully for chat: {} by user: {}", chatId, senderId);
-        } catch (Exception ex) {
-            log.error("Failed to save message to database for chat: {} by user: {}: {}", 
-                chatId, senderId, ex.getMessage(), ex);
+            chatEventProducer.publishEvent(event);
+            log.debug("Published chat event {} to Kafka for chat {}", eventId, chatId);
+        } catch (Exception e) {
+            log.error("Failed to publish chat event to Kafka for chat {}: {}", 
+                chatId, e.getMessage(), e);
         }
     }
 

@@ -12,4 +12,6 @@ import java.util.UUID;
 public interface MessageRepo extends JpaRepository<Message, UUID> {
     Page<Message> findByChatId(UUID chatId, Pageable pageable);
     Page<Message> findByChatIdOrderBySentAtDesc(UUID chatId, Pageable pageable);
+    
+    boolean existsByEventId(UUID eventId);
 }

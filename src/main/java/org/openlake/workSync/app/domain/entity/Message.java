@@ -23,6 +23,9 @@ public class Message {
     @Column(columnDefinition = "UUID", updatable = false, nullable = false)
     private UUID id;
 
+    @Column(name = "event_id", columnDefinition = "UUID", unique = true)
+    private UUID eventId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chat_id", nullable = false)
     @JsonIgnore
