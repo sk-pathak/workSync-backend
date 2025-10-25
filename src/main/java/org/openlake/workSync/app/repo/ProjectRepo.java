@@ -43,6 +43,12 @@ public interface ProjectRepo extends JpaRepository<Project, UUID> {
     @Query("SELECT p FROM Project p LEFT JOIN FETCH p.owner LEFT JOIN FETCH p.chat WHERE p.status = :status")
     Page<Project> findByStatus(@Param("status") ProjectStatus status, Pageable pageable);
 
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.owner LEFT JOIN FETCH p.chat WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%'))")
+    Page<Project> findByNameContaining(@Param("search") String search, Pageable pageable);
+
+    @Query("SELECT p FROM Project p LEFT JOIN FETCH p.owner LEFT JOIN FETCH p.chat WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) AND p.status = :status")
+    Page<Project> findByNameContainingAndStatus(@Param("search") String search, @Param("status") ProjectStatus status, Pageable pageable);
+
     @Query("SELECT p FROM Project p LEFT JOIN FETCH p.owner LEFT JOIN FETCH p.chat WHERE p.status = :status AND p.owner.id = :userId")
     Page<Project> findByStatusAndOwnerId(@Param("status") ProjectStatus status, @Param("userId") UUID userId, Pageable pageable);
 

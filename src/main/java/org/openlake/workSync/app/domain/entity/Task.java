@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
+import org.openlake.workSync.app.domain.enumeration.Priority;
 import org.openlake.workSync.app.domain.enumeration.TaskStatus;
 
 import java.time.Instant;
@@ -26,19 +27,16 @@ public class Task {
     @Column(columnDefinition = "UUID", updatable = false, nullable = false)
     private UUID id;
 
-    /** The project this task belongs to */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
     @JsonIgnore
     private Project project;
 
-    /** Who created the task */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creator_id", nullable = false)
     @JsonIgnore
     private User creator;
 
-    /** Who is assigned to work on the task (nullable) */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignee_id")
     @JsonIgnore
@@ -56,13 +54,12 @@ public class Task {
     @Column(name = "status", nullable = false)
     private TaskStatus status = TaskStatus.TODO;
 
-    /** Optional due date for the task */
     @Column(name = "due_date")
     private LocalDate dueDate;
 
-    /** Priority: lower = higher priority, e.g. 1–5 */
+    @Enumerated(EnumType.STRING)
     @Column(name = "priority")
-    private Integer priority;
+    private Priority priority;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

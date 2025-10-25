@@ -12,7 +12,7 @@ import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.UUID;
 import java.util.Map;
-import org.openlake.workSync.app.domain.payload.TaskAssignmentPayload;
+import org.openlake.workSync.app.dto.TaskNotificationPayloadDTO;
 
 @Entity
 @Table(name = "notifications")
@@ -57,7 +57,7 @@ public class Notification {
 
     @Column(columnDefinition = "jsonb")
     @JdbcTypeCode(SqlTypes.JSON)
-    private TaskAssignmentPayload payload;
+    private TaskNotificationPayloadDTO payload;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

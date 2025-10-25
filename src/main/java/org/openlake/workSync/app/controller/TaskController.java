@@ -22,8 +22,13 @@ public class TaskController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<PagedResponse<TaskResponseDTO>> listTasks(@PathVariable UUID projectId, @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(taskService.listTasks(projectId, pageable));
+    public ResponseEntity<PagedResponse<TaskResponseDTO>> listTasks(
+        @PathVariable UUID projectId, 
+        @RequestParam(required = false) String status,
+        @RequestParam(required = false) String priority,
+        @RequestParam(required = false) UUID assigneeId,
+        @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(taskService.listTasks(projectId, status, priority, assigneeId, pageable));
     }
 
     @PostMapping

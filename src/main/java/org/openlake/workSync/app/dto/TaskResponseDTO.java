@@ -1,6 +1,8 @@
 package org.openlake.workSync.app.dto;
 
 import lombok.*;
+import org.openlake.workSync.app.domain.enumeration.Priority;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
@@ -19,7 +21,7 @@ public class TaskResponseDTO {
     private String description;
     private String status;
     private LocalDate dueDate;
-    private Integer priority;
+    private Priority priority;
     private Instant createdAt;
     private Instant updatedAt;
 }

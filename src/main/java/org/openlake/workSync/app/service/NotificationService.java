@@ -18,7 +18,7 @@ import org.openlake.workSync.app.domain.enumeration.NotificationType;
 import org.openlake.workSync.app.domain.enumeration.TaskStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.openlake.workSync.app.domain.payload.TaskAssignmentPayload;
+import org.openlake.workSync.app.dto.TaskNotificationPayloadDTO;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -143,7 +143,7 @@ public class NotificationService {
     }
 
     public void notifyTaskAssigned(User recipient, User sender, Project project, Task task) {
-        TaskAssignmentPayload payload = TaskAssignmentPayload.builder()
+        TaskNotificationPayloadDTO payload = TaskNotificationPayloadDTO.builder()
                 .taskId(task.getId())
                 .taskTitle(task.getTitle())
                 .taskDescription(task.getDescription())
@@ -163,7 +163,7 @@ public class NotificationService {
     }
 
     public void notifyTaskStatusChanged(User recipient, User sender, Project project, Task task, TaskStatus oldStatus, TaskStatus newStatus) {
-        TaskAssignmentPayload payload = TaskAssignmentPayload.builder()
+        TaskNotificationPayloadDTO payload = TaskNotificationPayloadDTO.builder()
                 .taskId(task.getId())
                 .taskTitle(task.getTitle())
                 .oldStatus(oldStatus.name())
@@ -182,7 +182,7 @@ public class NotificationService {
     }
 
     public void notifyTaskDueSoon(User recipient, Task task) {
-        TaskAssignmentPayload payload = TaskAssignmentPayload.builder()
+        TaskNotificationPayloadDTO payload = TaskNotificationPayloadDTO.builder()
                 .taskId(task.getId())
                 .taskTitle(task.getTitle())
                 .dueDate(task.getDueDate())
@@ -200,7 +200,7 @@ public class NotificationService {
     }
 
     public void notifyTaskOverdue(User recipient, Task task) {
-        TaskAssignmentPayload payload = TaskAssignmentPayload.builder()
+        TaskNotificationPayloadDTO payload = TaskNotificationPayloadDTO.builder()
                 .taskId(task.getId())
                 .taskTitle(task.getTitle())
                 .dueDate(task.getDueDate())
@@ -218,7 +218,7 @@ public class NotificationService {
     }
 
     public void notifyTaskCommented(User recipient, User sender, Project project, Task task, String comment, UUID commentId) {
-        TaskAssignmentPayload payload = TaskAssignmentPayload.builder()
+        TaskNotificationPayloadDTO payload = TaskNotificationPayloadDTO.builder()
                 .taskId(task.getId())
                 .taskTitle(task.getTitle())
                 .comment(comment)
@@ -237,7 +237,7 @@ public class NotificationService {
     }
 
     public void notifyMentionedInComment(User recipient, User sender, Project project, Task task, String comment, UUID commentId) {
-        TaskAssignmentPayload payload = TaskAssignmentPayload.builder()
+        TaskNotificationPayloadDTO payload = TaskNotificationPayloadDTO.builder()
                 .taskId(task.getId())
                 .taskTitle(task.getTitle())
                 .comment(comment)

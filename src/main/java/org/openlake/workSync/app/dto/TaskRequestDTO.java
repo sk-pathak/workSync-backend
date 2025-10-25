@@ -3,6 +3,7 @@ package org.openlake.workSync.app.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.openlake.workSync.app.domain.enumeration.Priority;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -17,7 +18,7 @@ public class TaskRequestDTO {
 
     private String description;
     private LocalDate dueDate;
-    private Integer priority;
+    private Priority priority;
     private String status;
     private UUID assigneeId;
 }

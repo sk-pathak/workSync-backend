@@ -59,8 +59,17 @@ public class ProjectService {
 
     private static final Logger debugLogger = LoggerFactory.getLogger(ProjectService.class);
 
-    public PagedResponse<ProjectResponseDTO> listProjects(Pageable pageable) {
-        Page<Project> page = projectRepo.findAllWithOwner(pageable);
+    public PagedResponse<ProjectResponseDTO> listProjects(String search, ProjectStatus status, Pageable pageable) {
+        Page<Project> page;
+        if (search != null && !search.isEmpty() && status != null) {
+            page = projectRepo.findByNameContainingAndStatus(search, status, pageable);
+        } else if (search != null && !search.isEmpty()) {
+            page = projectRepo.findByNameContaining(search, pageable);
+        } else if (status != null) {
+            page = projectRepo.findByStatus(status, pageable);
+        } else {
+            page = projectRepo.findAllWithOwner(pageable);
+        }
         return new PagedResponse<>(page.map(this::enrichProjectWithMemberCount));
     }
 
@@ -122,7 +131,7 @@ public class ProjectService {
     public void starProject(UUID userId, UUID projectId) {
         ProjectStarId id = new ProjectStarId(projectId, userId);
         if (projectStarRepo.existsById(id)) {
-            throw new ProjectMembershipException("You have already starred this project");
+            return;
         }
         Project project = projectRepo.findById(projectId)
             .orElseThrow(() -> ResourceNotFoundException.projectNotFound(projectId));
@@ -135,7 +144,7 @@ public class ProjectService {
     public void unstarProject(UUID userId, UUID projectId) {
         ProjectStarId id = new ProjectStarId(projectId, userId);
         if (!projectStarRepo.existsById(id)) {
-            throw new ProjectMembershipException("You have not starred this project");
+            return;
         }
         projectStarRepo.deleteById(id);
     }
@@ -146,7 +155,7 @@ public class ProjectService {
         debugLogger.debug("Checking membership for projectId={}, userId={}: exists={}", projectId, userId, exists);
         
         if (isUserMember(projectId, userId)) {
-            throw new ProjectMembershipException("You are already a member of this project");
+            return;
         }
         
         Project project = projectRepo.findById(projectId)
@@ -205,7 +214,7 @@ public class ProjectService {
         
         ProjectMemberId id = new ProjectMemberId(projectId, userId);
         if (!projectMemberRepo.existsById(id)) {
-            throw new ProjectMembershipException("User is not a member of this project");
+            return;
         }
         projectMemberRepo.deleteById(id);
         clearProjectCache(projectId);
@@ -221,7 +230,7 @@ public class ProjectService {
         
         ProjectMemberId id = new ProjectMemberId(projectId, userId);
         if (!projectMemberRepo.existsById(id)) {
-            throw new ProjectMembershipException("You are not a member of this project");
+            return;
         }
         
         removeMember(projectId, userId);

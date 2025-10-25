@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.openlake.workSync.app.dto.PagedResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.openlake.workSync.app.domain.enumeration.Priority;
 import org.openlake.workSync.app.domain.enumeration.TaskStatus;
 
 import java.util.UUID;
@@ -31,8 +32,45 @@ public class TaskService {
     private final TaskMapper taskMapper;
     private final NotificationService notificationService;
 
-    public PagedResponse<TaskResponseDTO> listTasks(UUID projectId, Pageable pageable) {
-        Page<Task> page = taskRepo.findByProjectIdWithAssignee(projectId, pageable);
+    public PagedResponse<TaskResponseDTO> listTasks(UUID projectId, String status, String priority, UUID assigneeId, Pageable pageable) {
+        Page<Task> page;
+        
+        TaskStatus taskStatus = null;
+        if (status != null && !status.isEmpty()) {
+            try {
+                taskStatus = TaskStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new ValidationException("Invalid task status: " + status + ". Valid values are: TODO, IN_PROGRESS, DONE, BLOCKED");
+            }
+        }
+        
+        Priority taskPriority = null;
+        if (priority != null && !priority.isEmpty()) {
+            try {
+                taskPriority = Priority.valueOf(priority.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new ValidationException("Invalid task priority: " + priority + ". Valid values are: LOW, MEDIUM, HIGH, CRITICAL");
+            }
+        }
+        
+        if (taskStatus != null && taskPriority != null && assigneeId != null) {
+            page = taskRepo.findByProjectIdAndStatusAndPriorityAndAssigneeIdWithAssignee(projectId, taskStatus, taskPriority, assigneeId, pageable);
+        } else if (taskStatus != null && taskPriority != null) {
+            page = taskRepo.findByProjectIdAndStatusAndPriorityWithAssignee(projectId, taskStatus, taskPriority, pageable);
+        } else if (taskStatus != null && assigneeId != null) {
+            page = taskRepo.findByProjectIdAndStatusAndAssigneeIdWithAssignee(projectId, taskStatus, assigneeId, pageable);
+        } else if (taskPriority != null && assigneeId != null) {
+            page = taskRepo.findByProjectIdAndPriorityAndAssigneeIdWithAssignee(projectId, taskPriority, assigneeId, pageable);
+        } else if (taskStatus != null) {
+            page = taskRepo.findByProjectIdAndStatusWithAssignee(projectId, taskStatus, pageable);
+        } else if (taskPriority != null) {
+            page = taskRepo.findByProjectIdAndPriorityWithAssignee(projectId, taskPriority, pageable);
+        } else if (assigneeId != null) {
+            page = taskRepo.findByProjectIdAndAssigneeIdWithAssignee(projectId, assigneeId, pageable);
+        } else {
+            page = taskRepo.findByProjectIdWithAssignee(projectId, pageable);
+        }
+        
         return new PagedResponse<>(page.map(taskMapper::toResponse));
     }
 

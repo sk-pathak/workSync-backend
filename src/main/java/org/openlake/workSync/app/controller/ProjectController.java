@@ -30,8 +30,11 @@ public class ProjectController {
     private final CacheManager cacheManager;
 
     @GetMapping
-    public ResponseEntity<PagedResponse<ProjectResponseDTO>> listProjects(@PageableDefault Pageable pageable) {
-        return ResponseEntity.ok(projectService.listProjects(pageable));
+    public ResponseEntity<PagedResponse<ProjectResponseDTO>> listProjects(
+        @RequestParam(required = false) String search,
+        @RequestParam(required = false) ProjectStatus status,
+        @PageableDefault Pageable pageable) {
+        return ResponseEntity.ok(projectService.listProjects(search, status, pageable));
     }
 
     @GetMapping("/filtered")
