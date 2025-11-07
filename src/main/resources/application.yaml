@@ -6,6 +6,10 @@ spring:
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:password}
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:worksync}
+    hikari:
+      maximum-pool-size: 100
+      minimum-idle: 50
+      connection-timeout: 30000
   jpa:
     generate-ddl: false
     show-sql: false
@@ -41,6 +45,8 @@ spring:
 jwt:
   secretKey: ${JWT_SECRET}
   expiration: 86400000
+  cookie:
+    max-age: 604800  # 7 days in seconds
 
 logging:
   level:

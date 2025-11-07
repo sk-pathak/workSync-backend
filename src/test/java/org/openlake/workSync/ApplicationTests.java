@@ -1,4 +1,4 @@
-package org.openlake.projectmanagerbackend;
+package org.openlake.workSync;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
