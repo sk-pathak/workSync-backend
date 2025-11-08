@@ -3,6 +3,8 @@
 A **scalable, event-driven backend** for **WorkSync** — a collaborative platform that brings together project management, real-time chat, notifications, and analytics.  
 The backend focuses on **reliability, modularity, and real-time responsiveness**, using distributed systems patterns typically seen in production-scale systems.
 
+Frontend repo -> [workSync Frontend](https://github.com/sk-pathak/workSync-frontend)
+
 ---
 
 ## Architecture Overview
